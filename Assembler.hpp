@@ -142,7 +142,8 @@ namespace {
 	}
 
 	void div(std::ostream& out, Accu accu) {
-		move(out, accu, EBX);
+		if (accu != EBX)
+			move(out, accu, EBX);
 		pop(out, accu);
 		move(out, 0, EDX);
 
@@ -151,7 +152,7 @@ namespace {
 
 	void mod(std::ostream& out, Accu accu) {
 		div(out, accu);
-		move(out, EDX, EAX);
+		move(out, EDX, accu);
 	}
 
 	void call(std::ostream& out, const std::string& label) {
