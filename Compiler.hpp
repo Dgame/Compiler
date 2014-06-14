@@ -1,6 +1,8 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
+#include <vector>
+
 class Assembler;
 
 struct Loc {

@@ -173,7 +173,13 @@ bool parseCommand(Loc& loc, Assembler& as) {
 }
 
 int main(int argc, char const *argv[]) {
-	const std::string code = "print 4 * 3 / 2";
+	std::ifstream in("in.txt");
+
+	std::vector<char> code;
+	std::copy(
+		std::istreambuf_iterator<char>(in.rdbuf()),
+		std::istreambuf_iterator<char>(),
+		std::back_inserter(code));
 
 	std::ofstream out("out.s");
 	Assembler as(out);
