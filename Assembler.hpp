@@ -99,17 +99,32 @@ namespace {
 		add(out, 4, ptr);
 	}
 
-	// TODO: statischer typisieren
-	void push(std::ostream& out, int reg) {
-		out << "push\t" << Register.at(reg) << std::endl;
+	void push(std::ostream& out, Accu accu) {
+		out << "push\t" << Register.at(accu) << std::endl;
 	}
 
-	void pushv(std::ostream& out, int val) {
+	void push(std::ostream& out, Index index) {
+		out << "push\t" << Register.at(index) << std::endl;
+	}
+
+	void push(std::ostream& out, Pointer ptr) {
+		out << "push\t" << Register.at(ptr) << std::endl;
+	}
+
+	void push(std::ostream& out, int val) {
 		out << "push\t$" << numToStr(val) << std::endl;
 	}
 
-	void pop(std::ostream& out, int reg) {
-		out << "pop \t" << Register.at(reg) << std::endl;
+	void pop(std::ostream& out, Accu accu) {
+		out << "pop \t" << Register.at(accu) << std::endl;
+	}
+
+	void pop(std::ostream& out, Index index) {
+		out << "pop \t" << Register.at(index) << std::endl;
+	}
+
+	void pop(std::ostream& out, Pointer ptr) {
+		out << "pop \t" << Register.at(ptr) << std::endl;
 	}
 
 	void neg(std::ostream& out, Accu accu) {
