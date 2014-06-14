@@ -1,6 +1,7 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
+#include <iostream>
 #include <vector>
 
 class Assembler;
