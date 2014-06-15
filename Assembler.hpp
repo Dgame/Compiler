@@ -39,9 +39,7 @@ namespace {
 		{ESP, "%esp"},
 		{EIP, "%eip"},
 	};
-
-	#define PRINT_CALL "_print_int"
-
+	
 	std::string numToStr(int number) {
 		std::ostringstream ss;
 		ss << number;
@@ -115,6 +113,10 @@ namespace {
 		out << "push\t$" << numToStr(val) << std::endl;
 	}
 
+	void push(std::ostream& out, const std::string& label) {
+		out << "push\t$" << label << std::endl;
+	}
+
 	void pop(std::ostream& out, Accu accu) {
 		out << "pop \t" << Register.at(accu) << std::endl;
 	}
@@ -171,10 +173,17 @@ private:
 	std::ostringstream _buf;
 
 	unsigned int _stackSize = 0;
+	bool _leaved = false;
 
 public:
 	explicit Assembler(std::ostream& out);
 	virtual ~Assembler();
+
+	void ret();
+
+	unsigned int getStackSize() const {
+		return _stackSize;
+	}
 
 	void push() {
 		::push(_buf, EAX);
@@ -226,9 +235,14 @@ public:
 		::neg(_buf, ESP, offset);
 	}
 
-	void print() {
+	void call(const std::string& func) {
 		::push(_buf, EAX);
-		::call(_buf, PRINT_CALL);
+		::call(_buf, func);
+	}
+
+	void call(const std::string& func, const std::string& label) {
+		::push(_buf, label);
+		::call(_buf, func);
 	}
 };
 

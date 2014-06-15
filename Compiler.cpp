@@ -1,6 +1,7 @@
 #include "Compiler.hpp"
 #include "Assembler.hpp"
 #include "VarManager.hpp"
+#include "DataSection.hpp"
 
 Loc::Loc(const char* _pos, const char* const _end) : pos(_pos), end(_end) {
 
@@ -23,6 +24,52 @@ void skipSpaces(Loc& loc) {
 	}
 
 	skipComment(loc);
+}
+
+char unescape(char c) {
+	switch (c) { 
+		case 'n': return '\n'; 
+		case 't': return '\t'; 
+		case '\\': return '\\'; 
+		case '\"': return '\"'; 
+	}
+
+	std::cerr << "Unknown escape sequence \\" << c << std::endl;
+
+	return c;
+}
+
+bool readString(Loc& loc, std::string* str) { 
+	skipSpaces(loc);
+
+	if (!loc.eof() && *loc.pos == '"') { 
+		++loc.pos;
+
+		str->clear();
+
+		do {
+			if(*loc.pos == '\\') {
+				++loc.pos;
+
+				if (loc.eof()) { 
+					loc.error("EOF in string literal");
+
+					return false;
+				}
+
+				*str += unescape(*loc.pos);
+			} else 
+				*str += *loc.pos;
+
+			++loc.pos;
+		} while(!loc.eof() && *loc.pos != '\"');
+
+		++loc.pos;
+
+		return true;
+	}
+
+	return false;
 }
 
 bool read(Loc& loc, const char* what) {
@@ -62,7 +109,7 @@ bool read(Loc& loc, const char what) {
 bool readNumber(Loc& loc, int* n) {
 	skipSpaces(loc);
 
-	if (!loc.eof() && std::isdigit(*loc.pos) && n != nullptr) {
+	if (!loc.eof() && std::isdigit(*loc.pos)) {
 		*n = 0;
 		do {
 			*n *= 10;
@@ -95,6 +142,33 @@ bool readIdentifier(Loc& loc, std::string* identifier) {
 	return false;
 }
 
+bool parsePrint(Env& env) {
+	if (read(*env.loc, "print")) {
+		do {
+			std::string str;
+			if (readString(*env.loc, &str)) {
+				const std::string label = env.data->addStringData(str);
+
+				if (*env.loc->pos == ',')
+					env.as->call("_print_string", label);
+				else
+					env.as->call("_println_string", label);
+			} else if (parseExpression(env)) {
+				if (*env.loc->pos == ',')
+					env.as->call("_print_int");
+				else
+					env.as->call("_println_int");
+			}
+			else
+				env.loc->error("Missing or invalid print argument.");
+		} while (read(*env.loc, ','));
+
+		return true;
+	}
+
+	return false;
+}
+
 bool parseVarAssign(Env& env, const std::string& identifier, bool duty) {
 	if (read(*env.loc, '=')) {
 		if (parseExpression(env)) {
@@ -106,10 +180,38 @@ bool parseVarAssign(Env& env, const std::string& identifier, bool duty) {
 			return true;
 		} else
 			env.loc->error("Missing right operant of '='.");
-	} else if (duty)
+
+		return false;
+	} else if (duty) {
 		env.loc->error("Missing '=' in assignment.");
 
-	return !duty;
+		return false;
+	}
+
+	return true;
+}
+
+bool parseVar(Env& env) {
+	 if (read(*env.loc, "var")) {
+		std::string identifier;
+
+		if (readIdentifier(*env.loc, &identifier)) {
+			if (env.var->create(identifier)) {
+				if (parseVarAssign(env, identifier, false))
+					return true;
+			} else
+				env.loc->error("Redefinition of variable '" + identifier + '"');
+		}
+	} else {
+		std::string identifier;
+
+		if (readIdentifier(*env.loc, &identifier)) {
+			if (parseVarAssign(env, identifier, true))
+				return true;
+		}
+	}
+
+	return false;
 }
 
 bool parseLiteral(Env &env) {
@@ -241,37 +343,29 @@ bool parseExpression(Env& env) {
 }
 
 bool parseCommand(Env& env) {
-	if (read(*env.loc, "print")) {
-		if (parseExpression(env)) {
-			env.as->print();
-
-			return true;
-		} else
-			env.loc->error("Missing or invalid print argument.");
-	} else if (read(*env.loc, "var")) {
-		std::string identifier;
-		if (readIdentifier(*env.loc, &identifier)) {
-			if (env.var->create(identifier)) {
-				if (parseVarAssign(env, identifier, false))
-					return true;
-			} else
-				env.loc->error("Redefinition of variable '" + identifier + '"');
-
-			return false;
-		}
-	} else {
-		std::string identifier;
-		if (readIdentifier(*env.loc, &identifier)) {
-			if (parseVarAssign(env, identifier, true))
-				return true;
-		}
-	}
+	if (parsePrint(env))
+		return true;
+	else if (parseVar(env))
+		return true;
 
 	return false;
 }
 
+#define ALL 0
+#define BASIC_PRINT 0
+#define BASIC_VAR 0
+#define STRING_PRINT 1
+
 int main(int argc, char const *argv[]) {
+#if ALL
 	std::ifstream in("in.txt");
+#elif BASIC_VAR
+	std::ifstream in("basic_var.txt");
+#elif STRING_PRINT
+	std::ifstream in("string_print.txt");
+#else
+	std::ifstream in("basic_print.txt");
+#endif
 
 	std::vector<char> code;
 	std::copy(
@@ -284,12 +378,16 @@ int main(int argc, char const *argv[]) {
 	Assembler as(out);
 	Loc loc(&code[0], &code.back() + 1);
 	VarManager vm;
+	DataSection data;
 
-	Env env(&loc, &as, &vm);
+	Env env(&loc, &as, &vm, &data);
 
 	while (parseCommand(env)) {
 
 	}
+
+	as.ret();
+	data.writeDataSection(out);
 
 	return 0;
 }

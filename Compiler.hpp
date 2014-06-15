@@ -29,6 +29,10 @@ struct Loc {
 	}
 };
 
+char unescape(char c);
+
+bool readString(Loc& loc, std::string* str);
+
 void skipComment(Loc& loc);
 void skipSpaces(Loc& loc);
 bool read(Loc& loc, const char* what);
@@ -36,6 +40,8 @@ bool read(Loc& loc, const char what);
 bool readNumber(Loc& loc, int* n);
 bool readIdentifier(Loc& loc, std::string* identifier);
 
+bool parsePrint(Env& env);
+bool parseVar(Env& env);
 bool parseVarAssign(Env& env, bool duty);
 bool parseLiteral(Env &env);
 bool parseFactor(Env& env);

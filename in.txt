@@ -14,3 +14,6 @@ var b = a * 2 # Comment test
 print b # 8
 
 #print # absichtlicher Fehler
+
+// print "Hallo Welt"
+// print a, " + ", b, " = ", a + b

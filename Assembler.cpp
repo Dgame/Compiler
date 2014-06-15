@@ -28,6 +28,11 @@ Assembler::Assembler(std::ostream& out) {
 }
 
 Assembler::~Assembler() {
+	if (!_leaved)
+		this->ret();
+}
+
+void Assembler::ret() {
 	if (_stackSize > 0)
 		::sub(*_out, _stackSize, ESP);
 
@@ -37,4 +42,6 @@ Assembler::~Assembler() {
 		::add(*_out, _stackSize, ESP);
 
 	::end(*_out);
+
+	_leaved = true;
 }
