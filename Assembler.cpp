@@ -28,10 +28,13 @@ Assembler::Assembler(std::ostream& out) {
 }
 
 Assembler::~Assembler() {
-	::sub(*_out, _stackSize, ESP);
+	if (_stackSize > 0)
+		::sub(*_out, _stackSize, ESP);
 
 	*_out << _buf.str();
 
-	::add(*_out, _stackSize, ESP);
+	if (_stackSize > 0)
+		::add(*_out, _stackSize, ESP);
+
 	::end(*_out);
 }

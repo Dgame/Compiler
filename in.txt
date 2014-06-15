@@ -1,2 +1,16 @@
-print 1 + 2 * 3
-print 3 * 4 / 2
+print 1 + 2 * 3 # 7
+print 3 * 4 / 2 # 6
+
+print (1 + 2) * 3 # 9
+print 3 * (4 / 2) # 6
+
+var a
+a = 4
+
+print a # 4
+
+var b = a * 2 # Comment test
+
+print b # 8
+
+#print # absichtlicher Fehler

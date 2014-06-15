@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include "Env.hpp"
 
 class Assembler;
 
@@ -15,23 +16,31 @@ struct Loc {
 	explicit Loc(const char* _pos, const char* const _end);
 
 	bool eof() const {
-		return pos == end;
+		return this->pos == this->end;
 	}
 
 	void checkNewLine() {
-		if (*pos == '\n' || *pos == '\r')
-			lineNr++;
+		if (*this->pos == '\n')
+			this->lineNr++;
+	}
+
+	void error(const std::string& error) {
+		std::cerr << error << " -> On line " << this->lineNr << '.' << std::endl;
 	}
 };
 
+void skipComment(Loc& loc);
 void skipSpaces(Loc& loc);
 bool read(Loc& loc, const char* what);
 bool read(Loc& loc, const char what);
 bool readNumber(Loc& loc, int* n);
+bool readIdentifier(Loc& loc, std::string* identifier);
 
-bool parseFactor(Loc& loc, Assembler& as);
-bool parseTerm(Loc& loc, Assembler& as);
-bool parseExpression(Loc& loc, Assembler& as);
-bool parseCommand(Loc& loc, Assembler& as);
+bool parseVarAssign(Env& env, bool duty);
+bool parseLiteral(Env &env);
+bool parseFactor(Env& env);
+bool parseTerm(Env& env);
+bool parseExpression(Env& env);
+bool parseCommand(Env& env);
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef ASSEMBLER_HPP
 #define ASSEMBLER_HPP
 
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -170,7 +171,6 @@ private:
 	std::ostringstream _buf;
 
 	unsigned int _stackSize = 0;
-	unsigned int _offset = 0;
 
 public:
 	explicit Assembler(std::ostream& out);
@@ -186,20 +186,28 @@ public:
 
 	void move(int num) {
 		::move(_buf, num, EAX);
+	}
 
+	void assignVar(unsigned int offset) {
 		_stackSize += 4;
+
+		::move(_buf, EAX, ESP, offset);
+	}
+
+	void useVar(unsigned int offset) {
+		::move(_buf, ESP, EAX, offset);
 	}
 
 	void add() {
-		::add(_buf, ESP, EAX, _offset);
+		::add(_buf, ESP, EAX, _stackSize);
 	}
 
 	void sub() {
-		::sub(_buf, ESP, EAX, _offset);
+		::sub(_buf, ESP, EAX, _stackSize);
 	}
 
 	void mul() {
-		::mul(_buf, ESP, EAX, _offset);
+		::mul(_buf, ESP, EAX, _stackSize);
 	}
 
 	void div() {
