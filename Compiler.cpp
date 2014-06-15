@@ -106,6 +106,10 @@ bool read(Loc& loc, const char what) {
 	return false;
 }
 
+bool read(Loc& loc, Tok tok) {
+	return read(loc, TokStr.at(tok));
+}
+
 bool readNumber(Loc& loc, int* n) {
 	skipSpaces(loc);
 
@@ -143,21 +147,21 @@ bool readIdentifier(Loc& loc, std::string* identifier) {
 }
 
 bool parsePrint(Env& env) {
-	if (read(*env.loc, "print")) {
+	if (read(*env.loc, Tok::Print)) {
 		do {
 			std::string str;
 			if (readString(*env.loc, &str)) {
 				const std::string label = env.data->addStringData(str);
 
 				if (*env.loc->pos == ',')
-					env.as->call("_print_string", label);
+					env.as->call(LabelStr.at(Label::PrintS), label);
 				else
-					env.as->call("_println_string", label);
+					env.as->call(LabelStr.at(Label::PrintlnS), label);
 			} else if (parseExpression(env)) {
 				if (*env.loc->pos == ',')
-					env.as->call("_print_int");
+					env.as->call(LabelStr.at(Label::PrintI));
 				else
-					env.as->call("_println_int");
+					env.as->call(LabelStr.at(Label::PrintlnI));
 			}
 			else
 				env.loc->error("Missing or invalid print argument.");
@@ -192,7 +196,7 @@ bool parseVarAssign(Env& env, const std::string& identifier, bool duty) {
 }
 
 bool parseVar(Env& env) {
-	 if (read(*env.loc, "var")) {
+	 if (read(*env.loc, Tok::Var)) {
 		std::string identifier;
 
 		if (readIdentifier(*env.loc, &identifier)) {

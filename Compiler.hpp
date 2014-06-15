@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include "Env.hpp"
 
 class Assembler;
@@ -29,14 +30,40 @@ struct Loc {
 	}
 };
 
+enum class Tok {
+	Print,
+	Var
+};
+
+const std::map<Tok, const char*> TokStr = {
+	{Tok::Print, "print"},
+	{Tok::Var, "var"}
+};
+
+enum class Label {
+	PrintI,
+	PrintlnI,
+	PrintS,
+	PrintlnS
+};
+
+const std::map<Label, const char*> LabelStr = {
+	{Label::PrintI, "_print_int"},
+	{Label::PrintlnI, "_println_int"},
+	{Label::PrintS, "_print_string"},
+	{Label::PrintlnS, "_println_string"}
+};
+
 char unescape(char c);
 
 bool readString(Loc& loc, std::string* str);
 
 void skipComment(Loc& loc);
 void skipSpaces(Loc& loc);
+
 bool read(Loc& loc, const char* what);
 bool read(Loc& loc, const char what);
+bool read(Loc& loc, Tok tok);
 bool readNumber(Loc& loc, int* n);
 bool readIdentifier(Loc& loc, std::string* identifier);
 
