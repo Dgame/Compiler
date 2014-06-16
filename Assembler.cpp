@@ -66,7 +66,7 @@ namespace as {
 	}
 
 	void add(std::ostream& out, Accu accu, Pointer ptr, int offset) {
-	out << "addl\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
+		out << "addl\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
 	}
 
 	void add(std::ostream& out, Accu a1, Accu a2) {
