@@ -13,6 +13,8 @@ void skipComment(Loc& loc) {
 			++loc.pos;
 			// std::cout << "ignore comment at line " << loc.lineNr << std::endl;
 		} while (!loc.eof() && *loc.pos != '\n');
+
+		loc.pos++;
 	}
 }
 
@@ -146,24 +148,39 @@ bool readIdentifier(Loc& loc, std::string* identifier) {
 	return false;
 }
 
+//TODO: optimize
+/*
+	print 4
+Derzeit:
+	movl $4, %eax
+	push %eax
+	call ...
+Besser:
+	push $4
+	call ...
+*/
 bool parsePrint(Env& env) {
 	if (read(*env.loc, Tok::Print)) {
 		do {
+			const char* pos = env.loc->pos;
+			while(pos != env.loc->end && std::isspace(*pos)) {
+				pos++;
+			}
+
+			const bool isLastParam = *pos == ',';
+
 			std::string str;
 			if (readString(*env.loc, &str)) {
 				const std::string label = env.data->addStringData(str);
-
-				if (*env.loc->pos == ',')
-					env.as->call(LabelStr.at(Label::PrintS), label);
-				else
-					env.as->call(LabelStr.at(Label::PrintlnS), label);
+				
+				as::push(env.out, label);
+				as::call(env.out, isLastParam ? LabelStr.at(Label::PrintS) : LabelStr.at(Label::PrintlnS));
+				as::add(env.out, ESP, 4);
 			} else if (parseExpression(env)) {
-				if (*env.loc->pos == ',')
-					env.as->call(LabelStr.at(Label::PrintI));
-				else
-					env.as->call(LabelStr.at(Label::PrintlnI));
-			}
-			else
+				as::push(env.out, EAX);
+				as::call(env.out, isLastParam ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
+				as::add(env.out, ESP, 4);
+			} else
 				env.loc->error("Missing or invalid print argument.");
 		} while (read(*env.loc, ','));
 
@@ -179,7 +196,7 @@ bool parseVarAssign(Env& env, const std::string& identifier, bool duty) {
 			const int addr = env.var->addrOf(identifier);
 			assert(addr != -1);
 
-			env.as->assignVar(addr);
+			as::move(env.out, EAX, ESP, addr);
 
 			return true;
 		} else
@@ -196,9 +213,9 @@ bool parseVarAssign(Env& env, const std::string& identifier, bool duty) {
 }
 
 bool parseVar(Env& env) {
-	 if (read(*env.loc, Tok::Var)) {
-		std::string identifier;
+	std::string identifier;
 
+	 if (read(*env.loc, Tok::Var)) {
 		if (readIdentifier(*env.loc, &identifier)) {
 			if (env.var->create(identifier)) {
 				if (parseVarAssign(env, identifier, false))
@@ -207,8 +224,6 @@ bool parseVar(Env& env) {
 				env.loc->error("Redefinition of variable '" + identifier + '"');
 		}
 	} else {
-		std::string identifier;
-
 		if (readIdentifier(*env.loc, &identifier)) {
 			if (parseVarAssign(env, identifier, true))
 				return true;
@@ -221,7 +236,7 @@ bool parseVar(Env& env) {
 bool parseLiteral(Env &env) {
 	int num;
 	if (readNumber(*env.loc, &num)) {
-		env.as->move(num);
+		as::move(env.out, num, EAX);
 
 		return true;
 	}
@@ -232,7 +247,7 @@ bool parseLiteral(Env &env) {
 			const int addr = env.var->addrOf(identifier);
 			assert(addr != -1);
 
-			env.as->useVar(addr);
+			as::move(env.out, ESP, addr, EAX);
 
 			return true;
 		}
@@ -264,7 +279,7 @@ bool parseFactor(Env& env) {
 		return false;
 
 	if (negate)
-		env.as->neg();
+		as::neg(env.out, EAX);
 
 	return true;
 }
@@ -273,7 +288,7 @@ bool parseTerm(Env& env) {
 	if (parseFactor(env)) {
 		for (;;) {
 			if (read(*env.loc, '*')) {
-				env.as->push();;
+				as::push(env.out, EAX);
 
 				if (!parseFactor(env)) {
 					env.loc->error("Expected factor after *");
@@ -281,9 +296,10 @@ bool parseTerm(Env& env) {
 					return false;
 				}
 
-				env.as->mul();
+				as::mul(env.out, ESP, 0, EAX);
+				as::add(env.out, ESP, 4);
 			} else if (read(*env.loc, '/')) {
-				env.as->push();
+				as::push(env.out, EAX);
 
 				if (!parseFactor(env)) {
 					env.loc->error("Expected factor after /");
@@ -291,9 +307,11 @@ bool parseTerm(Env& env) {
 					return false;
 				}
 
-				env.as->div();
+                as::move(env.out, EAX, EBX);
+                as::pop(env.out, EAX);
+				as::div(env.out, EBX);
 			} else if (read(*env.loc, '%')) {
-				env.as->push();
+				as::push(env.out, EAX);
 
 				if (!parseFactor(env)) {
 					env.loc->error("Expected factor after %");
@@ -301,7 +319,10 @@ bool parseTerm(Env& env) {
 					return false;
 				}
 
-				env.as->mod();
+				as::move(env.out, EAX, EBX);
+                as::pop(env.out, EAX);
+				as::div(env.out, EBX); 
+				as::move(env.out, EDX, EAX);
 			} else
 				break;
 		}
@@ -316,7 +337,7 @@ bool parseExpression(Env& env) {
 	if (parseTerm(env)) {
 		for (;;) {
 			if (read(*env.loc, '+')) {
-				env.as->push();
+				as::push(env.out, EAX);
 
 				if (!parseTerm(env)) {
 					env.loc->error("Expected Term after +");
@@ -324,18 +345,19 @@ bool parseExpression(Env& env) {
 					return false;
 				}
 
-				env.as->add();
+                as::add(env.out, ESP, 0, EAX);
+                as::add(env.out, ESP, 4);
 			} else if (read(*env.loc, '-')) {
-				env.as->push();
+				as::push(env.out, EAX);
 
 				if (!parseTerm(env)) {
 					env.loc->error("Expected Term after -");
 
 					return false;
 				}
-				
-				env.as->sub();
-				env.as->pop(); // ?
+
+                as::sub(env.out, EAX, ESP, 0);
+                as::pop(env.out, EAX);
 			} else
 				break;
 		}
@@ -353,45 +375,4 @@ bool parseCommand(Env& env) {
 		return true;
 
 	return false;
-}
-
-#define ALL 0
-#define BASIC_PRINT 0
-#define BASIC_VAR 0
-#define STRING_PRINT 1
-
-int main(int argc, char const *argv[]) {
-#if ALL
-	std::ifstream in("in.txt");
-#elif BASIC_VAR
-	std::ifstream in("basic_var.txt");
-#elif STRING_PRINT
-	std::ifstream in("string_print.txt");
-#else
-	std::ifstream in("basic_print.txt");
-#endif
-
-	std::vector<char> code;
-	std::copy(
-		std::istreambuf_iterator<char>(in.rdbuf()),
-		std::istreambuf_iterator<char>(),
-		std::back_inserter(code));
-
-	std::ofstream out("out.s");
-
-	Assembler as(out);
-	Loc loc(&code[0], &code.back() + 1);
-	VarManager vm;
-	DataSection data;
-
-	Env env(&loc, &as, &vm, &data);
-
-	while (parseCommand(env)) {
-
-	}
-
-	as.ret();
-	data.writeDataSection(out);
-
-	return 0;
 }

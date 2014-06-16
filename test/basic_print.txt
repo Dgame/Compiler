@@ -1,0 +1,12 @@
+print 4 / 2 # 2
+print 3 * (4 / 2) # 6
+print 12 / 2 # 6
+
+print 1 + 2 * 3 # 7
+print 12 - 6 # 6
+
+print 6 - 12 # -6
+print (1 + 2) * 3 # 9
+
+print 4 * 2 + 8 # 16
+print 8 + 6 - 2 # 12

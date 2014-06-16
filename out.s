@@ -1,50 +1,110 @@
 .text
 .globl _prog
-
 _prog:
-push	%ebp
+
+pushl	%ebp
 movl	%esp, %ebp
 
-subl	$8, %esp
 movl	$4, %eax
-movl	%eax, (%esp)
-movl	(%esp), %eax
-push	%eax
+pushl	%eax
 movl	$2, %eax
-imull	4(%esp), %eax
-addl	$4, %esp
-movl	%eax, 4(%esp)
-push	$L0
-call	_println_string
-addl	$4, %esp
-movl	(%esp), %eax
-push	%eax
-call	_print_int
-addl	$4, %esp
-push	$L1
-call	_print_string
-addl	$4, %esp
-movl	4(%esp), %eax
-push	%eax
-call	_print_int
-addl	$4, %esp
-push	$L2
-call	_print_string
-addl	$4, %esp
-movl	(%esp), %eax
-push	%eax
-movl	4(%esp), %eax
-addl	8(%esp), %eax
-addl	$4, %esp
-push	%eax
+movl	%eax, %ebx
+popl	%eax
+movl	$0, %edx
+idiv	%ebx
+pushl	%eax
 call	_println_int
 addl	$4, %esp
-addl	$8, %esp
+movl	$3, %eax
+pushl	%eax
+movl	$4, %eax
+pushl	%eax
+movl	$2, %eax
+movl	%eax, %ebx
+popl	%eax
+movl	$0, %edx
+idiv	%ebx
+imull	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$12, %eax
+pushl	%eax
+movl	$2, %eax
+movl	%eax, %ebx
+popl	%eax
+movl	$0, %edx
+idiv	%ebx
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$1, %eax
+pushl	%eax
+movl	$2, %eax
+pushl	%eax
+movl	$3, %eax
+imull	0(%esp), %eax
+addl	$4, %esp
+addl	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$12, %eax
+pushl	%eax
+movl	$6, %eax
+subl	%eax, 0(%esp)
+popl	%eax
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$6, %eax
+pushl	%eax
+movl	$12, %eax
+subl	%eax, 0(%esp)
+popl	%eax
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$1, %eax
+pushl	%eax
+movl	$2, %eax
+addl	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+movl	$3, %eax
+imull	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$4, %eax
+pushl	%eax
+movl	$2, %eax
+imull	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+movl	$8, %eax
+addl	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+movl	$8, %eax
+pushl	%eax
+movl	$6, %eax
+addl	0(%esp), %eax
+addl	$4, %esp
+pushl	%eax
+movl	$2, %eax
+subl	%eax, 0(%esp)
+popl	%eax
+pushl	%eax
+call	_println_int
+addl	$4, %esp
 
-pop 	%ebp
+popl	%ebp
 ret
 
 .data
-L0:.ascii "Hallo Welt\n\0"
-L1:.ascii " + \0"
-L2:.ascii " = \0"

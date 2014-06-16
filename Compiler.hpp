@@ -6,11 +6,15 @@
 #include <map>
 #include "Env.hpp"
 
+#define OPTIMIZE_VAR_ASSIGN 1
+#define OPTIMIZE_PRINT_ASSIGN 1
+
 class Assembler;
 
 struct Loc {
 	const char* pos;
 	const char* const end;
+	const char* _bufPos = nullptr;
 
 	unsigned int lineNr = 1;
 
@@ -27,6 +31,17 @@ struct Loc {
 
 	void error(const std::string& error) {
 		std::cerr << error << " -> On line " << this->lineNr << '.' << std::endl;
+	}
+
+	void pushPos() {
+		_bufPos = this->pos;
+	}
+
+	void popPos() {
+		if (_bufPos != nullptr) {
+			this->pos = _bufPos;
+			_bufPos = nullptr;
+		}
 	}
 };
 
@@ -53,6 +68,10 @@ const std::map<Label, const char*> LabelStr = {
 	{Label::PrintS, "_print_string"},
 	{Label::PrintlnS, "_println_string"}
 };
+
+static bool isEOL(char c) {
+	return c == '\n' || c == '\r';
+}
 
 char unescape(char c);
 

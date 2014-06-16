@@ -1,0 +1,6 @@
+var a = 4
+var b
+b = 8
+
+print a # 4
+print b # 8

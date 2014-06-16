@@ -1,18 +1,21 @@
 #ifndef ENV_HPP
 #define ENV_HPP
 
+#include <iostream>
+
 class Loc;
-class Assembler;
 class VarManager;
 class DataSection;
 
 struct Env {
 	Loc* loc;
-	Assembler* as;
 	VarManager* var;
 	DataSection* data;
+	std::ostream& out;
 
-	explicit Env(Loc* _loc, Assembler* _as, VarManager* _var, DataSection* ds) : loc(_loc), as(_as), var(_var), data(ds) {
+	explicit Env(Loc* _loc, VarManager* _var, DataSection* ds, std::ostream& output)
+		: loc(_loc), var(_var), data(ds), out(output)
+	{
 
 	}
 };

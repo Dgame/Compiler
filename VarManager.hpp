@@ -18,12 +18,18 @@ public:
 	}
 
 	unsigned int popScope();
+	
+	unsigned int getStackSize() const {
+		return _stackSize;
+	}
 
 	bool hasOpenScopes() const {
 		return !_scope_start.empty();
 	}
 
 private:
+	unsigned int _stackSize = 0;
+
 	std::vector<std::string> _names;
 	std::vector<unsigned int> _scope_start;
 };

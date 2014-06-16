@@ -1,0 +1,24 @@
+var a = 4
+var b
+b = 8
+
+print a * b # 32
+print b * a # 32
+
+var c = a + b # 12
+print c
+
+var d = a * b # 32
+print d
+
+var e = a - b # -4
+print e
+var f = b - a # 4
+print f
+
+var g = a * 2 + b # 16
+print g
+
+var h = b / a # 2
+print h
+

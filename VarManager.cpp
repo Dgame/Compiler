@@ -2,6 +2,9 @@
 
 bool VarManager::create(const std::string& name) {
 	// assert(!_scope_start.empty());
+
+	_stackSize += 4;
+
 	auto it = _names.begin() + (!_scope_start.empty() ? _scope_start.back() : 0);
 
 	if (std::find(it, _names.end(), name) == _names.end()) {
