@@ -2,7 +2,7 @@
 
 namespace as {
 	void push(std::ostream& out, int num) {
-		out << "pushl\t" << patch::to_string(num) << std::endl;
+		out << "pushl\t$" << patch::to_string(num) << std::endl;
 	}
 
 	void push(std::ostream& out, Pointer ptr) {

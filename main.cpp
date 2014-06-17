@@ -6,8 +6,8 @@
 #include "DataSection.hpp"
 
 #define ALL 0
-#define BASIC_PRINT 1
-#define BASIC_VAR 0
+#define BASIC_PRINT 0
+#define BASIC_VAR 1
 #define EXT_VAR 0
 #define STRING_PRINT 0
 
@@ -30,9 +30,8 @@ int main(int argc, char const *argv[]) {
 		std::istreambuf_iterator<char>(),
 		std::back_inserter(code));
 
-	std::ofstream out("out.s");
-
-	as::start(out);
+	std::ofstream content("out.s");
+	std::ostringstream out;
 
 	Loc loc(&code[0], &code.back() + 1);
 	VarManager vm;
@@ -44,7 +43,11 @@ int main(int argc, char const *argv[]) {
 
 	}
 
-	as::end(out);
+	as::start(content);
+	as::sub(content, vm.getStackSize(), ESP);
+	content << "\n" << out.str() << std::endl;
+	as::add(content, vm.getStackSize(), ESP);
+	as::end(content);
 
 	return 0;
 }

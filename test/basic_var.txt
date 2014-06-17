@@ -1,6 +1,9 @@
 var a = 4
 var b
 b = 8
+var c = 16
 
 print a # 4
 print b # 8
+
+print c # 16

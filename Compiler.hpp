@@ -24,24 +24,23 @@ struct Loc {
 		return this->pos == this->end;
 	}
 
-	void checkNewLine() {
-		if (*this->pos == '\n')
-			this->lineNr++;
-	}
-
 	void error(const std::string& error) {
 		std::cerr << error << " -> On line " << this->lineNr << '.' << std::endl;
 	}
 
-	void pushPos() {
+	void bufPos() {
 		_bufPos = this->pos;
 	}
 
-	void popPos() {
+	void unbufPos() {
 		if (_bufPos != nullptr) {
 			this->pos = _bufPos;
-			_bufPos = nullptr;
+			this->unbuf();
 		}
+	}
+
+	void unbuf() {
+		_bufPos = nullptr;
 	}
 };
 
@@ -50,7 +49,7 @@ enum class Tok {
 	Var
 };
 
-const std::map<Tok, const char*> TokStr = {
+const std::map<Tok, const std::string> TokStr = {
 	{Tok::Print, "print"},
 	{Tok::Var, "var"}
 };
@@ -62,30 +61,33 @@ enum class Label {
 	PrintlnS
 };
 
-const std::map<Label, const char*> LabelStr = {
+const std::map<Label, const std::string> LabelStr = {
 	{Label::PrintI, "_print_int"},
 	{Label::PrintlnI, "_println_int"},
 	{Label::PrintS, "_print_string"},
 	{Label::PrintlnS, "_println_string"}
 };
 
-static bool isEOL(char c) {
-	return c == '\n' || c == '\r';
-}
-
-char unescape(char c);
-
-bool readString(Loc& loc, std::string* str);
+bool isEOL(char c);
 
 void skipComment(Loc& loc);
 void skipSpaces(Loc& loc);
 
-bool read(Loc& loc, const char* what);
-bool read(Loc& loc, const char what);
+bool readEOL(Loc& loc);
+
+char unescape(char c);
+
+bool readString(Loc& loc, std::string* str);
+bool read(Loc& loc, const std::string& what);
+bool read(Loc& loc, char what);
 bool read(Loc& loc, Tok tok);
 bool readNumber(Loc& loc, int* n);
 bool readIdentifier(Loc& loc, std::string* identifier);
 
+bool peek(Loc& loc, char what);
+// bool peek(Loc& loc, const char* what);
+
+bool parsePrintOptimized(Env& env);
 bool parsePrint(Env& env);
 bool parseVar(Env& env);
 bool parseVarAssign(Env& env, bool duty);

@@ -9,23 +9,34 @@ Loc::Loc(const char* _pos, const char* const _end) : pos(_pos), end(_end) {
 
 void skipComment(Loc& loc) {
 	if (!loc.eof() && *loc.pos == '#') {
-		do {
+		while (!loc.eof() && *loc.pos != '\n') {
 			++loc.pos;
-			// std::cout << "ignore comment at line " << loc.lineNr << std::endl;
-		} while (!loc.eof() && *loc.pos != '\n');
+		}
 
-		loc.pos++;
+		if (!loc.eof()) {
+			++loc.pos; // skip the '\n'
+			loc.lineNr++;
+		}
 	}
 }
 
 void skipSpaces(Loc& loc) {
 	while (!loc.eof() && std::isspace(*loc.pos)) {
-		loc.checkNewLine();
-		// std::cout << loc.lineNr << std::endl;
+		if (*loc.pos == '\n')
+			loc.lineNr++;
 		++loc.pos;
 	}
+}
 
+void skipSpacesAndComment(Loc& loc) {
+	skipSpaces(loc);
 	skipComment(loc);
+}
+
+bool readEOL(Loc& loc) {
+	skipSpacesAndComment(loc);
+
+	return loc.eof() || *(loc.pos - 1) == '\n';
 }
 
 char unescape(char c) {
@@ -42,7 +53,7 @@ char unescape(char c) {
 }
 
 bool readString(Loc& loc, std::string* str) { 
-	skipSpaces(loc);
+	skipSpacesAndComment(loc);
 
 	if (!loc.eof() && *loc.pos == '"') { 
 		++loc.pos;
@@ -74,30 +85,25 @@ bool readString(Loc& loc, std::string* str) {
 	return false;
 }
 
-bool read(Loc& loc, const char* what) {
-	skipSpaces(loc);
-
-	while (!loc.eof() && *loc.pos == *what) {
-		++what;
-		++loc.pos;
-
-		if (*what == '\0') {
-			--what;
-
-			if (std::isalpha(*what)) {
-				if (std::isalnum(*loc.pos))
-					return false;
-			}
-
-			return true;
-		}
+bool read(Loc& loc, const std::string& what) {
+	for (char c : what) {
+		if (!loc.eof() && *loc.pos == c)
+			++loc.pos;
+		else
+			return false;
 	}
 
-	return false;
+	if (!loc.eof() && !std::isspace(*loc.pos)) {
+		loc.error("Unknown command '" + what + '[' + *loc.pos + "]'. Use spaces.");
+
+		return false;
+	}
+
+	return true;
 }
 
-bool read(Loc& loc, const char what) {
-	skipSpaces(loc);
+bool read(Loc& loc, char what) {
+	skipSpacesAndComment(loc);
 
 	if (!loc.eof() && *loc.pos == what) {
 		++loc.pos;
@@ -113,7 +119,7 @@ bool read(Loc& loc, Tok tok) {
 }
 
 bool readNumber(Loc& loc, int* n) {
-	skipSpaces(loc);
+	skipSpacesAndComment(loc);
 
 	if (!loc.eof() && std::isdigit(*loc.pos)) {
 		*n = 0;
@@ -131,7 +137,7 @@ bool readNumber(Loc& loc, int* n) {
 }
 
 bool readIdentifier(Loc& loc, std::string* identifier) {
-	skipSpaces(loc);
+	skipSpacesAndComment(loc);
 
 	if (!loc.eof() && (std::isalpha(*loc.pos) || *loc.pos == '_')) {
 		identifier->clear();
@@ -148,9 +154,21 @@ bool readIdentifier(Loc& loc, std::string* identifier) {
 	return false;
 }
 
+bool peek(Loc& loc, char what) {
+	loc.bufPos();
+	const bool result = read(loc, what);
+	loc.unbufPos();
+
+	return result;
+}
+
 //TODO: optimize
 /*
-	print 4
+
+ -- 1 -- 
+
+ print 4
+
 Derzeit:
 	movl $4, %eax
 	push %eax
@@ -158,30 +176,84 @@ Derzeit:
 Besser:
 	push $4
 	call ...
+
+================
+
+ -- 2 --
+
+ print a
+
+ Derzeit:
+	movl 0(%esp), %eax
+	push %eax
+	call ...
+Besser:
+	push 0(%esp)
+	call ...
 */
+bool parsePrintOptimized(Env& env) {
+// <Optimize>
+	env.loc->bufPos();
+
+	int num;
+	if (readNumber(*env.loc, &num) && readEOL(*env.loc)) {
+		const bool comma = peek(*env.loc, ',');
+
+		as::push(env.out, num);
+		as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
+		as::add(env.out, ESP, 4);
+
+		env.loc->unbuf();
+
+		return true;
+	}
+
+	env.loc->unbufPos();
+	env.loc->bufPos();
+
+	std::string identifier;
+	if (readIdentifier(*env.loc, &identifier) && readEOL(*env.loc)) {
+		// std::cout << "optimized read: " << identifier << std::endl;
+		const bool comma = peek(*env.loc, ',');
+		const int addr = env.var->addrOf(identifier);
+		assert(addr != -1);
+
+		as::push(env.out, ESP, addr);
+		as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
+		as::add(env.out, ESP, 4);
+
+		env.loc->unbuf();
+
+		return true;
+	}
+
+	env.loc->unbufPos();
+
+	return false;
+// </Optimize>
+}
+
 bool parsePrint(Env& env) {
 	if (read(*env.loc, Tok::Print)) {
 		do {
-			const char* pos = env.loc->pos;
-			while(pos != env.loc->end && std::isspace(*pos)) {
-				pos++;
+			if (!parsePrintOptimized(env)) {
+				std::string str;
+				if (readString(*env.loc, &str)) {
+					const std::string label = env.data->addStringData(str);
+					const bool comma = peek(*env.loc, ',');
+					
+					as::push(env.out, label);
+					as::call(env.out, comma ? LabelStr.at(Label::PrintS) : LabelStr.at(Label::PrintlnS));
+					as::add(env.out, ESP, 4);
+				} else if (parseExpression(env)) {
+					const bool comma = peek(*env.loc, ',');
+
+					as::push(env.out, EAX);
+					as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
+					as::add(env.out, ESP, 4);
+				} else
+					env.loc->error("Missing or invalid print argument.");
 			}
-
-			const bool isLastParam = *pos == ',';
-
-			std::string str;
-			if (readString(*env.loc, &str)) {
-				const std::string label = env.data->addStringData(str);
-				
-				as::push(env.out, label);
-				as::call(env.out, isLastParam ? LabelStr.at(Label::PrintS) : LabelStr.at(Label::PrintlnS));
-				as::add(env.out, ESP, 4);
-			} else if (parseExpression(env)) {
-				as::push(env.out, EAX);
-				as::call(env.out, isLastParam ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
-				as::add(env.out, ESP, 4);
-			} else
-				env.loc->error("Missing or invalid print argument.");
 		} while (read(*env.loc, ','));
 
 		return true;
@@ -190,17 +262,40 @@ bool parsePrint(Env& env) {
 	return false;
 }
 
+// DONE: optimize
+/*
+	var a = a
+Derzeit:
+	movl	$4, %eax
+	movl	%eax, 0(%esp)
+Besser:
+	movl	$4, 0(%esp)
+*/
 bool parseVarAssign(Env& env, const std::string& identifier, bool duty) {
 	if (read(*env.loc, '=')) {
-		if (parseExpression(env)) {
-			const int addr = env.var->addrOf(identifier);
-			assert(addr != -1);
+		const int addr = env.var->addrOf(identifier);
+		assert(addr != -1);
 
+// <Optimize>
+		env.loc->bufPos();
+
+		int num;
+		if (readNumber(*env.loc, &num) && readEOL(*env.loc)) {
+			as::move(env.out, num, ESP, addr);
+
+			return true;
+		}
+
+		env.loc->unbufPos();
+// </Optimize>
+
+		if (parseExpression(env)) {
 			as::move(env.out, EAX, ESP, addr);
 
 			return true;
-		} else
-			env.loc->error("Missing right operant of '='.");
+		}
+
+		env.loc->error("Missing right operant of '='.");
 
 		return false;
 	} else if (duty) {

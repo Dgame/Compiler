@@ -1,6 +1,7 @@
 #ifndef VAR_MANAGER
 #define VAR_MANAGER
 
+// #include <iostream>
 #include <vector>
 #include <map>
 #include <string>
