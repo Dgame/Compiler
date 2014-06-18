@@ -7,6 +7,69 @@ Loc::Loc(const char* _pos, const char* const _end) : pos(_pos), end(_end) {
 
 }
 
+void buildAssembler(Env& env, Literal::Type* lty) {
+	for (unsigned int i = 0; i < env.mathExp.size(); i++) {
+		if (lty != nullptr)
+			*lty = env.mathExp[i].type;
+
+		const bool isLastRun = (i + 1) >= env.mathExp.size();
+
+		if (env.mathExp[i].type == Literal::Type::Numeric) {
+			if (!isLastRun && env.mathExp[i + 1].type == Literal::Type::Operator)
+				as::move(env.out, env.mathExp[i].value, EAX);
+			else
+				as::push(env.out, env.mathExp[i].value);
+		} else if (env.mathExp[i].type == Literal::Type::Address) {
+			if (!isLastRun && env.mathExp[i + 1].type == Literal::Type::Operator)
+				as::move(env.out, EAX, ESP, env.mathExp[i].value);
+			else
+				as::push(env.out, ESP, env.mathExp[i].value);
+		} else if (env.mathExp[i].type == Literal::Type::Operator) {
+			switch (env.mathExp[i].op) {
+				case Op::Plus:
+					as::add(env.out, ESP, 0, EAX);
+					as::add(env.out, ESP, 4);
+				break;
+
+				case Op::Minus:
+					as::sub(env.out, EAX, ESP, 0);
+					as::pop(env.out, EAX);
+				break;
+
+				case Op::Mul:
+					as::mul(env.out, ESP, 0, EAX);
+					as::add(env.out, ESP, 4);
+				break;
+
+				case Op::Div:
+					as::move(env.out, EAX, EBX);
+					as::pop(env.out, EAX);
+					as::div(env.out, EBX);
+				break;
+
+				case Op::Mod:
+					as::move(env.out, EAX, EBX);
+					as::pop(env.out, EAX);
+					as::div(env.out, EBX); 
+					as::move(env.out, EDX, EAX);
+				break;
+			}
+
+			if (!isLastRun && 
+				(env.mathExp[i + 1].type == Literal::Type::Numeric || env.mathExp[i + 1].type == Literal::Type::Address))
+			{
+				as::push(env.out, EAX);
+			}
+		} else if (env.mathExp[i].type == Literal::Type::Negate) {
+			if (!isLastRun && env.mathExp[i + 1].type == Literal::Type::Numeric) {
+				if (env.mathExp[i].negate)
+					env.mathExp[i + 1].value *= -1;
+			} else
+				env.loc->error("Cannot negate non numeric literal.");
+		}
+	}
+}
+
 void skipComment(Loc& loc) {
 	if (!loc.eof() && *loc.pos == '#') {
 		while (!loc.eof() && *loc.pos != '\n') {
@@ -33,12 +96,6 @@ void skipSpacesAndComment(Loc& loc) {
 	skipComment(loc);
 }
 
-bool readEOL(Loc& loc) {
-	skipSpacesAndComment(loc);
-
-	return loc.eof() || *(loc.pos - 1) == '\n';
-}
-
 char unescape(char c) {
 	switch (c) { 
 		case 'n': return '\n'; 
@@ -50,6 +107,12 @@ char unescape(char c) {
 	std::cerr << "Unknown escape sequence \\" << c << std::endl;
 
 	return c;
+}
+
+bool readEOL(Loc& loc) {
+	skipSpacesAndComment(loc);
+
+	return loc.eof() || *(loc.pos - 1) == '\n';
 }
 
 bool readString(Loc& loc, std::string* str) { 
@@ -162,98 +225,33 @@ bool peek(Loc& loc, char what) {
 	return result;
 }
 
-//TODO: optimize
-/*
-
- -- 1 -- 
-
- print 4
-
-Derzeit:
-	movl $4, %eax
-	push %eax
-	call ...
-Besser:
-	push $4
-	call ...
-
-================
-
- -- 2 --
-
- print a
-
- Derzeit:
-	movl 0(%esp), %eax
-	push %eax
-	call ...
-Besser:
-	push 0(%esp)
-	call ...
-*/
-bool parsePrintOptimized(Env& env) {
-// <Optimize>
-	env.loc->bufPos();
-
-	int num;
-	if (readNumber(*env.loc, &num) && readEOL(*env.loc)) {
-		const bool comma = peek(*env.loc, ',');
-
-		as::push(env.out, num);
-		as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
-		as::add(env.out, ESP, 4);
-
-		env.loc->unbuf();
-
-		return true;
-	}
-
-	env.loc->unbufPos();
-	env.loc->bufPos();
-
-	std::string identifier;
-	if (readIdentifier(*env.loc, &identifier) && readEOL(*env.loc)) {
-		// std::cout << "optimized read: " << identifier << std::endl;
-		const bool comma = peek(*env.loc, ',');
-		const int addr = env.var->addrOf(identifier);
-		assert(addr != -1);
-
-		as::push(env.out, ESP, addr);
-		as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
-		as::add(env.out, ESP, 4);
-
-		env.loc->unbuf();
-
-		return true;
-	}
-
-	env.loc->unbufPos();
-
-	return false;
-// </Optimize>
-}
-
 bool parsePrint(Env& env) {
 	if (read(*env.loc, Tok::Print)) {
 		do {
-			if (!parsePrintOptimized(env)) {
-				std::string str;
-				if (readString(*env.loc, &str)) {
-					const std::string label = env.data->addStringData(str);
-					const bool comma = peek(*env.loc, ',');
-					
-					as::push(env.out, label);
-					as::call(env.out, comma ? LabelStr.at(Label::PrintS) : LabelStr.at(Label::PrintlnS));
-					as::add(env.out, ESP, 4);
-				} else if (parseExpression(env)) {
-					const bool comma = peek(*env.loc, ',');
+			std::string str;
+			if (readString(*env.loc, &str)) {
+				const std::string label = env.data->addStringData(str);
+				const bool comma = peek(*env.loc, ',');
+				
+				as::push(env.out, label);
+				as::call(env.out, comma ? LabelStr.at(Label::PrintS) : LabelStr.at(Label::PrintlnS));
+				as::add(env.out, ESP, 4);
+			} else if (parseExpression(env)) {
+				const bool comma = peek(*env.loc, ',');
 
+				Literal::Type lty;
+				buildAssembler(env, &lty);
+
+				if (lty == Literal::Type::Operator)
 					as::push(env.out, EAX);
-					as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
-					as::add(env.out, ESP, 4);
-				} else
-					env.loc->error("Missing or invalid print argument.");
+
+				as::call(env.out, comma ? LabelStr.at(Label::PrintI) : LabelStr.at(Label::PrintlnI));
+				as::add(env.out, ESP, 4);
+			} else {
+				env.loc->error("Missing or invalid print argument.");
 			}
+
+			env.mathExp.resetSize();
 		} while (read(*env.loc, ','));
 
 		return true;
@@ -331,7 +329,8 @@ bool parseVar(Env& env) {
 bool parseLiteral(Env &env) {
 	int num;
 	if (readNumber(*env.loc, &num)) {
-		as::move(env.out, num, EAX);
+		// as::move(env.out, num, EAX);
+		env.mathExp.push_back(Literal(num));
 
 		return true;
 	}
@@ -342,7 +341,8 @@ bool parseLiteral(Env &env) {
 			const int addr = env.var->addrOf(identifier);
 			assert(addr != -1);
 
-			as::move(env.out, ESP, addr, EAX);
+			// as::move(env.out, ESP, addr, EAX);
+			env.mathExp.push_back(Literal(Addr(addr)));
 
 			return true;
 		}
@@ -354,9 +354,11 @@ bool parseLiteral(Env &env) {
 }
 
 bool parseFactor(Env& env) {
-	bool negate = false;
-	if (read(*env.loc, '-'))
-		negate = true;
+	// bool negate = false;
+	if (read(*env.loc, '-')) {
+		// negate = true;
+		env.mathExp.push_back(Literal(true));
+	}
 
 	if (parseLiteral(env)) {
 		// nothing to do
@@ -373,8 +375,8 @@ bool parseFactor(Env& env) {
 	} else
 		return false;
 
-	if (negate)
-		as::neg(env.out, EAX);
+	// if (negate)
+		// as::neg(env.out, EAX);
 
 	return true;
 }
@@ -383,7 +385,7 @@ bool parseTerm(Env& env) {
 	if (parseFactor(env)) {
 		for (;;) {
 			if (read(*env.loc, '*')) {
-				as::push(env.out, EAX);
+				// as::push(env.out, EAX);
 
 				if (!parseFactor(env)) {
 					env.loc->error("Expected factor after *");
@@ -391,10 +393,12 @@ bool parseTerm(Env& env) {
 					return false;
 				}
 
-				as::mul(env.out, ESP, 0, EAX);
-				as::add(env.out, ESP, 4);
+				// as::mul(env.out, ESP, 0, EAX);
+				// as::add(env.out, ESP, 4);
+
+				env.mathExp.push_back(Literal(Op::Mul));
 			} else if (read(*env.loc, '/')) {
-				as::push(env.out, EAX);
+				// as::push(env.out, EAX);
 
 				if (!parseFactor(env)) {
 					env.loc->error("Expected factor after /");
@@ -402,11 +406,13 @@ bool parseTerm(Env& env) {
 					return false;
 				}
 
-                as::move(env.out, EAX, EBX);
-                as::pop(env.out, EAX);
-				as::div(env.out, EBX);
+				// as::move(env.out, EAX, EBX);
+				// as::pop(env.out, EAX);
+				// as::div(env.out, EBX);
+
+				env.mathExp.push_back(Literal(Op::Div));
 			} else if (read(*env.loc, '%')) {
-				as::push(env.out, EAX);
+				// as::push(env.out, EAX);
 
 				if (!parseFactor(env)) {
 					env.loc->error("Expected factor after %");
@@ -414,10 +420,12 @@ bool parseTerm(Env& env) {
 					return false;
 				}
 
-				as::move(env.out, EAX, EBX);
-                as::pop(env.out, EAX);
-				as::div(env.out, EBX); 
-				as::move(env.out, EDX, EAX);
+				// as::move(env.out, EAX, EBX);
+				// as::pop(env.out, EAX);
+				// as::div(env.out, EBX); 
+				// as::move(env.out, EDX, EAX);
+
+				env.mathExp.push_back(Literal(Op::Mod));
 			} else
 				break;
 		}
@@ -432,7 +440,7 @@ bool parseExpression(Env& env) {
 	if (parseTerm(env)) {
 		for (;;) {
 			if (read(*env.loc, '+')) {
-				as::push(env.out, EAX);
+				// as::push(env.out, EAX);
 
 				if (!parseTerm(env)) {
 					env.loc->error("Expected Term after +");
@@ -440,10 +448,12 @@ bool parseExpression(Env& env) {
 					return false;
 				}
 
-                as::add(env.out, ESP, 0, EAX);
-                as::add(env.out, ESP, 4);
+				// as::add(env.out, ESP, 0, EAX);
+				// as::add(env.out, ESP, 4);
+
+				env.mathExp.push_back(Literal(Op::Plus));
 			} else if (read(*env.loc, '-')) {
-				as::push(env.out, EAX);
+				// as::push(env.out, EAX);
 
 				if (!parseTerm(env)) {
 					env.loc->error("Expected Term after -");
@@ -451,8 +461,9 @@ bool parseExpression(Env& env) {
 					return false;
 				}
 
-                as::sub(env.out, EAX, ESP, 0);
-                as::pop(env.out, EAX);
+				// as::sub(env.out, EAX, ESP, 0);
+				// as::pop(env.out, EAX);
+				env.mathExp.push_back(Literal(Op::Minus));
 			} else
 				break;
 		}

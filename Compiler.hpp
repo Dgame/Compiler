@@ -68,15 +68,14 @@ const std::map<Label, const std::string> LabelStr = {
 	{Label::PrintlnS, "_println_string"}
 };
 
-bool isEOL(char c);
+void buildAssembler(Env& env, Literal::Type* lty = nullptr);
 
 void skipComment(Loc& loc);
 void skipSpaces(Loc& loc);
 
-bool readEOL(Loc& loc);
-
 char unescape(char c);
 
+bool readEOL(Loc& loc);
 bool readString(Loc& loc, std::string* str);
 bool read(Loc& loc, const std::string& what);
 bool read(Loc& loc, char what);
@@ -85,9 +84,7 @@ bool readNumber(Loc& loc, int* n);
 bool readIdentifier(Loc& loc, std::string* identifier);
 
 bool peek(Loc& loc, char what);
-// bool peek(Loc& loc, const char* what);
 
-bool parsePrintOptimized(Env& env);
 bool parsePrint(Env& env);
 bool parseVar(Env& env);
 bool parseVarAssign(Env& env, bool duty);

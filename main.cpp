@@ -4,10 +4,11 @@
 #include "Assembler.hpp"
 #include "VarManager.hpp"
 #include "DataSection.hpp"
+#include "Literal.hpp"
 
 #define ALL 0
-#define BASIC_PRINT 0
-#define BASIC_VAR 1
+#define BASIC_PRINT 1
+#define BASIC_VAR 0
 #define EXT_VAR 0
 #define STRING_PRINT 0
 
@@ -44,9 +45,13 @@ int main(int argc, char const *argv[]) {
 	}
 
 	as::start(content);
-	as::sub(content, vm.getStackSize(), ESP);
+	if (vm.getStackSize() != 0)
+		as::sub(content, vm.getStackSize(), ESP);
+
 	content << "\n" << out.str() << std::endl;
-	as::add(content, vm.getStackSize(), ESP);
+
+	if (vm.getStackSize() != 0)
+		as::add(content, vm.getStackSize(), ESP);
 	as::end(content);
 
 	return 0;
