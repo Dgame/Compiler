@@ -2,6 +2,7 @@
 #define ENV_HPP
 
 #include <iostream>
+#include <list>
 #include "Literal.hpp"
 
 class Loc;
@@ -13,7 +14,7 @@ struct Env {
 	VarManager* var;
 	DataSection* data;
 	std::ostream& out;
-	Range<Literal> mathExp;
+	std::list<Literal> mathExp;
 
 	explicit Env(Loc* _loc, VarManager* _var, DataSection* ds, std::ostream& output)
 		: loc(_loc), var(_var), data(ds), out(output)

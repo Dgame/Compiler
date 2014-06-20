@@ -8,24 +8,27 @@ Loc::Loc(const char* _pos, const char* const _end) : pos(_pos), end(_end) {
 }
 
 void buildAssembler(Env& env, Literal::Type* lty) {
-	for (unsigned int i = 0; i < env.mathExp.size(); i++) {
+	while (env.mathExp.size() != 0) {
+		const Literal le = env.mathExp.front();
+		env.mathExp.pop_front();
+
 		if (lty != nullptr)
-			*lty = env.mathExp[i].type;
+			*lty = le.type;
 
-		const bool isLastRun = (i + 1) >= env.mathExp.size();
+		const bool isLastRun = env.mathExp.size() == 0;
 
-		if (env.mathExp[i].type == Literal::Type::Numeric) {
-			if (!isLastRun && env.mathExp[i + 1].type == Literal::Type::Operator)
-				as::move(env.out, env.mathExp[i].value, EAX);
+		if (le.type == Literal::Type::Numeric) {
+			if (!isLastRun && env.mathExp.front().type == Literal::Type::Operator)
+				as::move(env.out, le.value, EAX);
 			else
-				as::push(env.out, env.mathExp[i].value);
-		} else if (env.mathExp[i].type == Literal::Type::Address) {
-			if (!isLastRun && env.mathExp[i + 1].type == Literal::Type::Operator)
-				as::move(env.out, EAX, ESP, env.mathExp[i].value);
+				as::push(env.out, le.value);
+		} else if (le.type == Literal::Type::Address) {
+			if (!isLastRun && env.mathExp.front().type == Literal::Type::Operator)
+				as::move(env.out, EAX, ESP, le.value);
 			else
-				as::push(env.out, ESP, env.mathExp[i].value);
-		} else if (env.mathExp[i].type == Literal::Type::Operator) {
-			switch (env.mathExp[i].op) {
+				as::push(env.out, ESP, le.value);
+		} else if (le.type == Literal::Type::Operator) {
+			switch (le.op) {
 				case Op::Plus:
 					as::add(env.out, ESP, 0, EAX);
 					as::add(env.out, ESP, 4);
@@ -56,14 +59,15 @@ void buildAssembler(Env& env, Literal::Type* lty) {
 			}
 
 			if (!isLastRun && 
-				(env.mathExp[i + 1].type == Literal::Type::Numeric || env.mathExp[i + 1].type == Literal::Type::Address))
+				(env.mathExp.front().type == Literal::Type::Numeric || 
+				 env.mathExp.front().type == Literal::Type::Address))
 			{
 				as::push(env.out, EAX);
 			}
-		} else if (env.mathExp[i].type == Literal::Type::Negate) {
-			if (!isLastRun && env.mathExp[i + 1].type == Literal::Type::Numeric) {
-				if (env.mathExp[i].negate)
-					env.mathExp[i + 1].value *= -1;
+		} else if (le.type == Literal::Type::Negate) {
+			if (!isLastRun && env.mathExp.front().type == Literal::Type::Numeric) {
+				if (le.negate)
+					env.mathExp.front().value *= -1;
 			} else
 				env.loc->error("Cannot negate non numeric literal.");
 		}
@@ -229,6 +233,7 @@ bool parsePrint(Env& env) {
 	if (read(*env.loc, Tok::Print)) {
 		do {
 			std::string str;
+			
 			if (readString(*env.loc, &str)) {
 				const std::string label = env.data->addStringData(str);
 				const bool comma = peek(*env.loc, ',');
@@ -250,8 +255,6 @@ bool parsePrint(Env& env) {
 			} else {
 				env.loc->error("Missing or invalid print argument.");
 			}
-
-			env.mathExp.resetSize();
 		} while (read(*env.loc, ','));
 
 		return true;
