@@ -9,6 +9,7 @@ struct Loc {
 	const char* pos;
 	const char* const end;
 
+	uint32 errors = 0;
 	uint32 lineNr = 1;
 
 	explicit Loc(const char* _pos, const char* const _end);
@@ -18,6 +19,8 @@ struct Loc {
 	}
 
 	void error(const std::string& error) {
+		this->errors++;
+		
 		std::cerr << error << " -> On line " << this->lineNr << '.' << std::endl;
 	}
 };

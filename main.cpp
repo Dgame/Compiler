@@ -40,15 +40,17 @@ int main(int argc, char const *argv[]) {
 		std::cout << "----" << std::endl;
 	}
 
-	// as::start(content);
-	// if (vm.getStackSize() != 0)
-	// 	as::sub(content, vm.getStackSize(), ESP);
+	if (loc.errors == 0) {
+		// as::start(content);
+		// if (vm.getStackSize() != 0)
+		// 	as::sub(content, vm.getStackSize(), ESP);
 
-	// content << "\n" << out.str() << std::endl;
+		// content << "\n" << out.str() << std::endl;
 
-	// if (vm.getStackSize() != 0)
-	// 	as::add(content, vm.getStackSize(), ESP);
-	// as::end(content);
+		// if (vm.getStackSize() != 0)
+		// 	as::add(content, vm.getStackSize(), ESP);
+		// as::end(content);
+	}
 
 	return 0;
 }
