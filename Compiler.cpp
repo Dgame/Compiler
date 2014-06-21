@@ -127,7 +127,7 @@ bool parseVar(Env& env) {
 	if (read(*env.loc, Tok::Var)) {
 		if (readIdentifier(*env.loc, &identifier)) {
 			if (!env.varManager->createVar(identifier)) {
-				env.loc->error("Redefinition of variable '" + identifier + '"');
+				env.loc->error("Redefinition of variable '" + identifier + '\'');
 
 				return false;
 			}
