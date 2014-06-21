@@ -1,26 +1,20 @@
 #ifndef ENV_HPP
 #define ENV_HPP
 
-#include <iostream>
-#include <list>
-#include "Literal.hpp"
+#include <vector>
+#include <memory>
 
-class Loc;
-class VarManager;
-class DataSection;
+struct Loc;
+struct Expression;
+struct VarManager;
+struct Command;
 
 struct Env {
 	Loc* loc;
-	VarManager* var;
-	DataSection* data;
-	std::ostream& out;
-	std::list<Literal> mathExp;
+	std::unique_ptr<Expression> exp;
 
-	explicit Env(Loc* _loc, VarManager* _var, DataSection* ds, std::ostream& output)
-		: loc(_loc), var(_var), data(ds), out(output)
-	{
-
-	}
+	VarManager* varManager;
+	std::vector<std::unique_ptr<Command>> commands;
 };
 
 #endif

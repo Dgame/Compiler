@@ -1,49 +1,22 @@
 #include "VarManager.hpp"
+#include "Expression.hpp"
+#include "unique.hpp"
 
-bool VarManager::create(const std::string& name) {
-	// assert(!_scope_start.empty());
+bool VarManager::createVar(const std::string& name, int16 size) {
+	if (this->variables.find(name) != this->variables.end())
+		return false;
 
-	_stackSize += 4;
-	
-	auto it = _names.begin() + (!_scope_start.empty() ? _scope_start.back() : 0);
+	this->variables[name] = patch::make_unique<Variable>(name, this->stackSize, size);
+	this->stackSize += size;
 
-	if (std::find(it, _names.end(), name) == _names.end()) {
-		_names.push_back(name);
-
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
-bool VarManager::exist(const std::string& name) const {
-	// assert(!_scope_start.empty());
+Variable* VarManager::getVar(const std::string& name) const {
+	auto it = this->variables.find(name);
+	if (it == this->variables.end())
+		return nullptr;
 
-	return std::find(_names.begin(), _names.end(), name) != _names.end();
+	return it->second.get();
 }
 
-int VarManager::addrOf(const std::string& name) const {
-	// assert(!_scope_start.empty());
-
-	for (unsigned int i_plus_one = _names.size(); i_plus_one > 0; --i_plus_one) {
-		if (_names[i_plus_one - 1] == name) {
-			return 4 * (i_plus_one - 1);
-		}
-	}
-
-	// assert(false);
-	return -1;
-}
-
-unsigned int VarManager::popScope() {
-	assert(!_scope_start.empty());
-
-	const unsigned int to_pop = 4 * (_names.size() - _scope_start.back());
-	if (to_pop != 0) {
-		_names.erase(_names.begin() + _scope_start.back(), _names.end());
-	}
-
-	_scope_start.pop_back();
-
-	return to_pop;
-}

@@ -15,3 +15,10 @@ print (1 + 2) * 3 # 9
 
 print 4 * 2 + 8 # 16
 print 8 + 6 - 2 # 12
+
+var a = 4
+
+print a * 2 / 2
+
+var b
+b = 8

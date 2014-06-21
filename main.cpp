@@ -1,21 +1,15 @@
 #include <vector>
 #include <fstream>
+#include <sstream>
 #include "Compiler.hpp"
-#include "Assembler.hpp"
-#include "VarManager.hpp"
-#include "DataSection.hpp"
-#include "Literal.hpp"
 
-#define ALL 0
 #define BASIC_PRINT 1
 #define BASIC_VAR 0
 #define EXT_VAR 0
 #define STRING_PRINT 0
 
 int main(int argc, char const *argv[]) {
-#if ALL
-	std::ifstream in("test/in.txt");
-#elif BASIC_VAR
+#if BASIC_VAR
 	std::ifstream in("test/basic_var.txt");
 #elif EXT_VAR
 	std::ifstream in("test/ext_var.txt");
@@ -36,23 +30,25 @@ int main(int argc, char const *argv[]) {
 
 	Loc loc(&code[0], &code.back() + 1);
 	VarManager vm;
-	DataSection data;
 
-	Env env(&loc, &vm, &data, out);
+	Env env;
+	env.loc = &loc;
+	env.varManager = &vm;
 
 	while (parseCommand(env)) {
-
+		// std::cout << "Command found" << std::endl;
+		std::cout << "----" << std::endl;
 	}
 
-	as::start(content);
-	if (vm.getStackSize() != 0)
-		as::sub(content, vm.getStackSize(), ESP);
+	// as::start(content);
+	// if (vm.getStackSize() != 0)
+	// 	as::sub(content, vm.getStackSize(), ESP);
 
-	content << "\n" << out.str() << std::endl;
+	// content << "\n" << out.str() << std::endl;
 
-	if (vm.getStackSize() != 0)
-		as::add(content, vm.getStackSize(), ESP);
-	as::end(content);
+	// if (vm.getStackSize() != 0)
+	// 	as::add(content, vm.getStackSize(), ESP);
+	// as::end(content);
 
 	return 0;
 }

@@ -54,8 +54,8 @@ namespace as {
 
 	void push(std::ostream& out, int num);
 	void push(std::ostream& out, Pointer ptr);
-	void push(std::ostream& out, Accu accu);
 	void push(std::ostream& out, Pointer ptr, int offset);
+	void push(std::ostream& out, Accu accu);
 	void push(std::ostream& out, const std::string& label);
 
 	void pop(std::ostream& out, Accu accu);
