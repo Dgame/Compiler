@@ -3,18 +3,80 @@
 
 void buildAssembler(std::ostream& out, Expression* exp) {
 	if (ImmedAssign* ia = exp->isImmedAssign()) {
-		if (ia->value->isOperator()) {
-			std::cerr << "Cannot work with only an operator." << std::endl;
-
-			return;
-		} else if (Value* v = ia->value->isValue()) {
+		if (Value* v = ia->value->isValue()) {
 			as::move(out, v->value, EAX);
 		} else if (Variable* v = ia->value->isVariable()) {
 			as::move(out, ESP, v->offset, EAX);
 		}
 	} else if (Term* t = exp->isTerm()) {
-		// TODO: 
-		as::move(out, -42, EAX);
+		int pushed = 0;
+		int offset = 0;
+
+		while (Literal* lit = t->pop()) {
+			if (Value* val = lit->isValue()) {
+				if (t->top() == nullptr || t->top()->isOperator())
+					as::move(out, val->value, EAX);
+				else {
+					pushed++;
+					as::push(out, val->value);
+				}
+			} else if (Operator* op = lit->isOperator()) {
+				switch (op->op) {
+					case Op::Plus:
+						as::add(out, ESP, offset, EAX);
+
+						if (pushed != 0) {
+							as::add(out, ESP, 4);
+							--pushed;
+						}
+					break;
+
+					case Op::Minus:
+						as::sub(out, EAX, ESP, offset);
+
+						if (pushed != 0) {
+							as::pop(out, EAX);
+							--pushed;
+						}
+					break;
+
+					case Op::Mul:
+						as::mul(out, ESP, offset, EAX);
+
+						if (pushed != 0) {
+							as::add(out, ESP, 4);
+							--pushed;
+						}
+					break;
+
+					case Op::Div:
+						as::move(out, EAX, EBX);
+						as::pop(out, EAX);
+						as::div(out, EBX);
+					break;
+
+					case Op::Mod:
+						as::move(out, EAX, EBX);
+						as::pop(out, EAX);
+						as::div(out, EBX); 
+						as::move(out, EDX, EAX);
+					break;
+
+					case Op::Negate:
+						as::neg(out, EAX);
+					break;
+				}
+
+				if (op->op != Op::Negate) {
+					offset = 0;
+
+					if (t->top() != nullptr && t->top()->isValue()) {
+						as::push(out, EAX);
+						pushed++;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -30,11 +92,7 @@ void buildAssembler(std::ostream& out, VarAssign* va) {
 	Variable* var = va->var.get();
 
 	if (ImmedAssign* ia = var->exp->isImmedAssign()) {
-		if (ia->value->isOperator()) {
-			std::cerr << "Cannot assign only an operator." << std::endl;
-
-			return;
-		} else if (Value* v = ia->value->isValue()) {
+		if (Value* v = ia->value->isValue()) {
 			as::move(out, v->value, ESP, var->offset);
 		} else if (Variable* v = ia->value->isVariable()) {
 			as::move(out, ESP, v->offset, EAX);

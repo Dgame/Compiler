@@ -37,8 +37,7 @@ int main(int argc, char const *argv[]) {
 	env.varManager = &vm;
 
 	while (parseCommand(env)) {
-		// std::cout << "Command found" << std::endl;
-		std::cout << "----" << std::endl;
+		
 	}
 
 	if (loc.errors == 0) {

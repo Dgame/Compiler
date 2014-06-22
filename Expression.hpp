@@ -17,7 +17,7 @@ enum class Op : char {
 	Mul = '*',
 	Div = '/',
 	Mod = '%',
-	Negate = '-'
+	Negate = '_' // To solve the duplicate switch value error
 };
 
 struct Operator;

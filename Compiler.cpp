@@ -211,8 +211,9 @@ bool parseLiteral(Env &env) {
 }
 
 bool parseFactor(Env& env) {
+	bool negate = false;
 	if (read(*env.loc, '-')) {
-		env.exp->assign(new Operator(Op::Negate));
+		negate = true;
 	}
 
 	if (parseLiteral(env)) {
@@ -229,6 +230,10 @@ bool parseFactor(Env& env) {
 		}
 	} else
 		return false;
+
+	if (negate) {
+		env.exp->assign(new Operator(Op::Negate));
+	}
 
 	return true;
 }
@@ -306,8 +311,8 @@ bool parseExpression(Env& env) {
 
 bool parseCommand(Env& env) {
 	if (parsePrint(env)) {
-		std::cout << "Parsed print" << std::endl;
-
+		// std::cout << "Parsed print" << std::endl;
+		/*
 		for (auto& uq : env.commands) {
 			if (Print* p = uq->isPrint()) {
 				if (Term* t = p->exp->isTerm()) {
@@ -317,15 +322,15 @@ bool parseCommand(Env& env) {
 				}
 			}
 		}
-
+		*/
 		return true;
 	} else if (parseVar(env)) {
-		std::cout << "Parsed Var" << std::endl;
-
+		// std::cout << "Parsed Var" << std::endl;
+		/*
 		for (auto& kv : env.varManager->variables) {
 			std::cout << kv.first << std::endl;
 		}
-
+		*/
 		return true;
 	} else if (parseExit(env)) {
 		return false;
