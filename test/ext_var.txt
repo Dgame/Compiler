@@ -8,17 +8,30 @@ print b * a # 32
 var c = a + b # 12
 print c
 
-# var d = a * b # 32
-# print d
+var c2 = b + a # 12
+print c2
 
-# var e = a - b # -4
-# print e
-# var f = b - a # 4
-# print f
+var d = a * b # 32
+print d
 
-# var g = a * 2 + b # 16
-# print g
+var e = a - b # -4
+print e
+var f = b - a # 4
+print f
 
-# var h = b / a # 2
-# print h
+var g = a * 2 + b # 16
+print g
 
+var h = b / a # 2
+print h
+
+a = 4
+
+print a * 11 # 44
+
+a = 2
+b = 4
+c = 8
+
+print a + b * c # 34
+print a + 4 * c # 34

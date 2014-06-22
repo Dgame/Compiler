@@ -5,117 +5,81 @@ _prog:
 pushl	%ebp
 movl	%esp, %ebp
 
-subl	$12, %esp
+subl	$36, %esp
 
-movl	$4, %eax
+movl	$4, 0(%esp)
+
+movl	$8, 4(%esp)
+
+movl	0(%esp), %eax
+imull	4(%esp), %eax
 pushl	%eax
 call	_println_int
 addl	$4, %esp
 
-movl	$8, %eax
+movl	4(%esp), %eax
+imull	0(%esp), %eax
 pushl	%eax
 call	_println_int
 addl	$4, %esp
 
-movl	$42, %eax
-negl	%eax
-pushl	%eax
+movl	0(%esp), %eax
+addl	4(%esp), %eax
+movl	%eax, 8(%esp)
+
+pushl	8(%esp)
 call	_println_int
 addl	$4, %esp
 
-pushl	$4
+movl	4(%esp), %eax
+addl	0(%esp), %eax
+movl	%eax, 12(%esp)
+
+pushl	12(%esp)
+call	_println_int
+addl	$4, %esp
+
+movl	0(%esp), %eax
+imull	4(%esp), %eax
+movl	%eax, 16(%esp)
+
+pushl	16(%esp)
+call	_println_int
+addl	$4, %esp
+
+movl	0(%esp), %eax
+subl	4(%esp), %eax
+movl	%eax, 20(%esp)
+
+pushl	20(%esp)
+call	_println_int
+addl	$4, %esp
+
+movl	4(%esp), %eax
+subl	0(%esp), %eax
+movl	%eax, 24(%esp)
+
+pushl	24(%esp)
+call	_println_int
+addl	$4, %esp
+
+movl	0(%esp), %eax
 movl	$2, %eax
-movl	%eax, %ebx
-popl	%eax
+imull	0(%esp), %eax
+addl	4(%esp), %eax
+movl	%eax, 28(%esp)
+
+pushl	28(%esp)
+call	_println_int
+addl	$4, %esp
+
+movl	4(%esp), %eax
 movl	$0, %edx
+movl	0(%esp), %ebx
 idiv	%ebx
-pushl	%eax
-call	_println_int
-addl	$4, %esp
+movl	%eax, 32(%esp)
 
-pushl	$3
-pushl	$4
-movl	$2, %eax
-movl	%eax, %ebx
-popl	%eax
-movl	$0, %edx
-idiv	%ebx
-imull	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$12
-movl	$2, %eax
-movl	%eax, %ebx
-popl	%eax
-movl	$0, %edx
-idiv	%ebx
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$1
-pushl	$2
-movl	$3, %eax
-imull	0(%esp), %eax
-addl	$4, %esp
-addl	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$12
-movl	$6, %eax
-subl	%eax, 0(%esp)
-popl	%eax
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$6
-movl	$12, %eax
-subl	%eax, 0(%esp)
-popl	%eax
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$1
-movl	$2, %eax
-addl	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-movl	$3, %eax
-imull	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$4
-movl	$2, %eax
-imull	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-movl	$8, %eax
-addl	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-call	_println_int
-addl	$4, %esp
-
-pushl	$8
-movl	$6, %eax
-addl	0(%esp), %eax
-addl	$4, %esp
-pushl	%eax
-movl	$2, %eax
-subl	%eax, 0(%esp)
-popl	%eax
-pushl	%eax
+pushl	32(%esp)
 call	_println_int
 addl	$4, %esp
 
@@ -127,10 +91,6 @@ imull	0(%esp), %eax
 pushl	%eax
 call	_println_int
 addl	$4, %esp
-
-movl	$8, 4(%esp)
-
-movl	$16, 4(%esp)
 
 movl	$2, 0(%esp)
 
@@ -152,7 +112,7 @@ pushl	%eax
 call	_println_int
 addl	$4, %esp
 
-addl	$12, %esp
+addl	$36, %esp
 
 popl	%ebp
 ret

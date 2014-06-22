@@ -4,9 +4,9 @@
 #include "Compiler.hpp"
 #include "Backend.hpp"
 
-#define BASIC_PRINT 1
+#define BASIC_PRINT 0
 #define BASIC_VAR 0
-#define EXT_VAR 0
+#define EXT_VAR 1
 #define STRING_PRINT 0
 
 int main(int argc, char const *argv[]) {
@@ -37,7 +37,7 @@ int main(int argc, char const *argv[]) {
 	env.varManager = &vm;
 
 	while (parseCommand(env)) {
-		
+
 	}
 
 	if (loc.errors == 0) {

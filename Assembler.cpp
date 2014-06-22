@@ -126,7 +126,6 @@ namespace as {
 	}
 
 	void div(std::ostream& out, Accu accu) {
-		move(out, 0, EDX);
 		out << "idiv\t" << Register.at(accu) << std::endl;
 	}
 
