@@ -16,12 +16,19 @@ print (1 + 2) * 3 # 9
 print 4 * 2 + 8 # 16
 print 8 + 6 - 2 # 12
 
-# #exit
+# exit
 
-# var a = 4
+var a = 4
 
-# print a * 2 / 2
+print a * 11
 
-# var b
-# b = 8
-# b = 16
+var b
+b = 8
+b = 16
+
+a = 2
+b = 4
+var c = 8
+
+print a + b * c
+print a + 4 * c

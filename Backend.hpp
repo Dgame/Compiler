@@ -2,6 +2,7 @@
 #define BACKEND_HPP
 
 #include <iostream>
+#include <stack>
 #include "Assembler.hpp"
 
 struct Expression;

@@ -12,9 +12,23 @@ void buildAssembler(std::ostream& out, Expression* exp) {
 		int pushed = 0;
 		int offset = 0;
 
+		std::stack<int> offsets;
+
 		while (Literal* lit = t->pop()) {
-			if (Value* val = lit->isValue()) {
-				if (t->top() == nullptr || t->top()->isOperator())
+			if (Variable* var = lit->isVariable()) {
+				Literal* next = t->at(1);
+
+				if (t->top() != nullptr && t->top()->isOperator()) {
+					offset = var->offset;
+				} else if (next != nullptr && next->isOperator()) {
+					std::cout << "Move -> " << var->offset << std::endl;
+					as::move(out, ESP, var->offset, EAX);
+				} else {
+					std::cout << "Push to stack -> " << var->offset << std::endl;
+					offsets.push(var->offset);
+				}
+			} else if (Value* val = lit->isValue()) {
+				if (t->top() == nullptr || !t->top()->isValue())
 					as::move(out, val->value, EAX);
 				else {
 					pushed++;
@@ -68,7 +82,11 @@ void buildAssembler(std::ostream& out, Expression* exp) {
 				}
 
 				if (op->op != Op::Negate) {
-					offset = 0;
+					if (!offsets.empty()) {
+						offset = offsets.top();
+						offsets.pop();
+					} else
+						offset = 0;
 
 					if (t->top() != nullptr && t->top()->isValue()) {
 						as::push(out, EAX);

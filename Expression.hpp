@@ -84,6 +84,15 @@ struct Term : public Expression {
 		return this->values.front();
 	}
 
+	Literal* at(uint16 index) const {
+		if (this->values.size() <= index)
+			return nullptr;
+
+		auto it = this->values.begin();
+
+		return *std::next(it, index);
+	}
+
 	Literal* pop() {
 		if (this->values.size() == 0)
 			return nullptr;

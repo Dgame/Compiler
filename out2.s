@@ -5,6 +5,8 @@ _prog:
 pushl	%ebp
 movl	%esp, %ebp
 
+subl	$12, %esp
+
 movl	$4, %eax
 pushl	%eax
 call	_println_int
@@ -117,6 +119,40 @@ pushl	%eax
 call	_println_int
 addl	$4, %esp
 
+movl	$4, 0(%esp)
+
+movl	0(%esp), %eax
+movl	$11, %eax
+imull	0(%esp), %eax
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+
+movl	$8, 4(%esp)
+
+movl	$16, 4(%esp)
+
+movl	$2, 0(%esp)
+
+movl	$4, 4(%esp)
+
+movl	$8, 8(%esp)
+
+movl	4(%esp), %eax
+imull	8(%esp), %eax
+addl	0(%esp), %eax
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+
+movl	$4, %eax
+imull	8(%esp), %eax
+addl	0(%esp), %eax
+pushl	%eax
+call	_println_int
+addl	$4, %esp
+
+addl	$12, %esp
 
 popl	%ebp
 ret
