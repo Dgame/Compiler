@@ -25,7 +25,7 @@ int main(int argc, char const *argv[]) {
 		std::istreambuf_iterator<char>(),
 		std::back_inserter(code));
 
-	std::ofstream content("out.s");
+	std::ofstream content("out2.s");
 	std::ostringstream out;
 
 	Loc loc(&code[0], &code.back() + 1);

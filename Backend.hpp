@@ -1,6 +1,7 @@
 #ifndef BACKEND_HPP
 #define BACKEND_HPP
 
+#include <iostream>
 #include "Assembler.hpp"
 
 struct Expression;

@@ -23,7 +23,16 @@ struct Operator;
 struct Value;
 struct Variable;
 
+enum class LiTy {
+	None,
+	Operator,
+	Value,
+	Variable
+};
+
 struct Literal {
+	LiTy lty;
+
 	virtual Operator* isOperator() {
 		return nullptr;
 	}

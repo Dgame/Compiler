@@ -326,7 +326,7 @@ bool parseCommand(Env& env) {
 
 		return true;
 	} else if (parseExit(env)) {
-		return true;
+		return false;
 	}
 
 	return false;
