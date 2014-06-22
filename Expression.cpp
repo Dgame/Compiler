@@ -39,7 +39,7 @@ Variable::Variable(const Variable& var) {
 
 	this->name = var.name;
 	this->offset = var.offset;
-	this->size = size;
+	this->size = var.size;
 
 	Expression* exp = var.exp.get();
 	if (Term* t = exp->isTerm())
