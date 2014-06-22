@@ -24,3 +24,4 @@ print a * 2 / 2
 
 var b
 b = 8
+b = 16
