@@ -166,6 +166,8 @@ bool parseVarAssign(Env& env, const std::string& name) {
 		if (Variable* var = env.varManager->getVar(name)) {
 			var->exp.reset(env.exp.release());
 
+			env.commands.emplace_back(patch::make_unique<VarAssign>(var));
+
 			return true;
 		}
 

@@ -20,7 +20,7 @@ Operator::Operator(Op op) {
 	this->op = op;
 }
 
-Value::Value(int32 value) {
+Value::Value(int value) {
 	this->lty = LiTy::Value;
 
 	this->value = value;
@@ -34,7 +34,27 @@ Variable::Variable(const std::string& name, int16 offset, int16 size) {
 	this->size = size;
 }
 
+Variable::Variable(const Variable& var) {
+	this->lty = LiTy::Variable;
+
+	this->name = var.name;
+	this->offset = var.offset;
+	this->size = size;
+
+	Expression* exp = var.exp.get();
+	if (Term* t = exp->isTerm())
+		this->exp = patch::make_unique<Term>(*t);
+	else if (ImmedAssign* ia = exp->isImmedAssign())
+		this->exp = patch::make_unique<ImmedAssign>(*ia);
+	else
+		assert(0);
+}
+
 Print::Print(Expression* exp, const std::string& label) {
 	this->exp.reset(exp);
 	this->label = label;
+}
+
+VarAssign::VarAssign(Variable* var) {
+	this->var = patch::make_unique<Variable>(*var);
 }

@@ -1,7 +1,6 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-using int32 = int;
 using int16 = short int;
 using int8 = char;
 using uint32 = unsigned int;

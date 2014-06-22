@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <cassert>
 
 #include "unique.hpp"
 #include "types.hpp"
@@ -132,9 +133,9 @@ struct Operator : public Literal {
 };
 
 struct Value : public Literal {
-	int32 value;
+	int value;
 
-	explicit Value(int32 value);
+	explicit Value(int value);
 
 	virtual Value* isValue() override {
 		return this;
@@ -147,14 +148,15 @@ struct Value : public Literal {
 
 struct Variable : public Literal {
 	std::string name;
-	std::shared_ptr<Expression> exp;
+	std::unique_ptr<Expression> exp;
 	int16 offset = -1;
 	uint16 size = 0;
 
 	explicit Variable(const std::string& name, int16 offset, int16 size = 4);
+	Variable(const Variable& var);
 
 	void assign(Expression& exp) {
-		this->exp = std::make_shared<Expression>(exp);
+		this->exp = patch::make_unique<Expression>(exp);
 	}
 
 	virtual Variable* isVariable() override {
@@ -167,10 +169,15 @@ struct Variable : public Literal {
 };
 
 struct Print;
+struct VarAssign;
 struct Exit;
 
 struct Command {
 	virtual Print* isPrint() {
+		return nullptr;
+	}
+
+	virtual VarAssign* isVarAssign() {
 		return nullptr;
 	}
 
@@ -191,6 +198,16 @@ struct Print : public Command {
 
 	void assign(Expression& exp) {
 		this->exp = patch::make_unique<Expression>(exp);
+	}
+};
+
+struct VarAssign : public Command {
+	std::unique_ptr<Variable> var;
+
+	explicit VarAssign(Variable* var);
+
+	virtual VarAssign* isVarAssign() override {
+		return this;
 	}
 };
 

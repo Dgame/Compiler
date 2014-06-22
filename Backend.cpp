@@ -14,6 +14,7 @@ void buildAssembler(std::ostream& out, Expression* exp) {
 		}
 	} else if (Term* t = exp->isTerm()) {
 		// TODO: 
+		as::move(out, -42, EAX);
 	}
 }
 
@@ -25,7 +26,9 @@ void buildAssembler(std::ostream& out, Print* print) {
 	as::add(out, 4, ESP);
 }
 
-void buildAssembler(std::ostream& out, Variable* var) {
+void buildAssembler(std::ostream& out, VarAssign* va) {
+	Variable* var = va->var.get();
+
 	if (ImmedAssign* ia = var->exp->isImmedAssign()) {
 		if (ia->value->isOperator()) {
 			std::cerr << "Cannot assign only an operator." << std::endl;
@@ -38,11 +41,23 @@ void buildAssembler(std::ostream& out, Variable* var) {
 			as::move(out, EAX, ESP, var->offset);
 		}
 	} else {
-		buildAssembler(out, var->exp.get());
-		as::move(out, EAX, ESP, var->offset);
+		// buildAssembler(out, var->exp.get());
+		// as::move(out, EAX, ESP, var->offset);
 	}
 }
 
 void buildAssembler(std::ostream& out, Exit* exit) {
-	as::ret(out);
+	// as::ret(out);
+}
+
+void buildAssembler(std::ostream& out, Command* cmd) {
+	if (Print* p = cmd->isPrint()) {
+		buildAssembler(out, p);
+	} else if (VarAssign* va = cmd->isVarAssign()) {
+		buildAssembler(out, va);
+	} else if (Exit* e = cmd->isExit()) {
+		buildAssembler(out, e);
+	}
+
+	out << std::endl;
 }

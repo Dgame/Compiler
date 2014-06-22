@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include "Compiler.hpp"
+#include "Backend.hpp"
 
 #define BASIC_PRINT 1
 #define BASIC_VAR 0
@@ -41,15 +42,19 @@ int main(int argc, char const *argv[]) {
 	}
 
 	if (loc.errors == 0) {
-		// as::start(content);
-		// if (vm.getStackSize() != 0)
-		// 	as::sub(content, vm.getStackSize(), ESP);
+		as::start(content);
+		if (vm.stackSize != 0) {
+			as::sub(content, vm.stackSize, ESP);
+			content << std::endl;
+		}
 
-		// content << "\n" << out.str() << std::endl;
+		for (std::unique_ptr<Command>& cmd : env.commands) {
+			buildAssembler(content, cmd.get());
+		}
 
-		// if (vm.getStackSize() != 0)
-		// 	as::add(content, vm.getStackSize(), ESP);
-		// as::end(content);
+		if (vm.stackSize != 0)
+			as::add(content, vm.stackSize, ESP);
+		as::end(content);
 	}
 
 	return 0;
