@@ -161,8 +161,6 @@ struct Print;
 struct Exit;
 
 struct Command {
-	virtual void output(std::ostream& out) = 0;
-
 	virtual Print* isPrint() {
 		return nullptr;
 	}
@@ -170,17 +168,12 @@ struct Command {
 	virtual Exit* isExit() {
 		return nullptr;
 	}
-
-	virtual void eval() {
-		
-	}
 };
 
 struct Print : public Command {
 	std::unique_ptr<Expression> exp;
 	std::string label;
 
-	Print() = default;
 	explicit Print(Expression* exp, const std::string& label);
 
 	virtual Print* isPrint() override {
@@ -190,8 +183,6 @@ struct Print : public Command {
 	void assign(Expression& exp) {
 		this->exp = patch::make_unique<Expression>(exp);
 	}
-
-	virtual void output(std::ostream& out) override;
 };
 
 struct Exit : public Command {

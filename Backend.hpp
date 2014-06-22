@@ -1,8 +1,16 @@
 #ifndef BACKEND_HPP
 #define BACKEND_HPP
 
-struct Expression;
+#include "Assembler.hpp"
 
-bool buildAssembler(Expression* exp);
+struct Expression;
+struct Print;
+struct Exit;
+struct Variable;
+
+void buildAssembler(std::ostream& out, Expression* exp);
+void buildAssembler(std::ostream& out, Print* print);
+void buildAssembler(std::ostream& out, Variable* var);
+void buildAssembler(std::ostream& out, Exit* exit);
 
 #endif

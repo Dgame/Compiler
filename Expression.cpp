@@ -32,7 +32,3 @@ Print::Print(Expression* exp, const std::string& label) {
 	this->exp.reset(exp);
 	this->label = label;
 }
-
-void Print::output(std::ostream& out) {
-
-}

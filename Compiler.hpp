@@ -54,6 +54,8 @@ bool parsePrint(Env& env);
 bool parseVar(Env& env);
 bool parseVarAssign(Env& env, const std::string& name);
 
+bool parseExit(Env& env);
+
 bool parseLiteral(Env &env);
 bool parseFactor(Env& env);
 bool parseTerm(Env& env);

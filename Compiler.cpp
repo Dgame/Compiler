@@ -104,13 +104,14 @@ bool readIdentifier(Loc& loc, std::string* identifier) {
 
 bool parsePrint(Env& env) {
 	if (read(*env.loc, Tok::Print)) {
-		env.exp = patch::make_unique<Term>();
-
 		do {
-			if (parseExpression(env)) {
-				// const bool comma = peek(*env.loc, ',');
+			env.exp = patch::make_unique<Term>();
 
-				// TODO: 
+			if (parseExpression(env)) {
+				const bool comma = peek(*env.loc, ',');
+				const Label label = comma ? Label::PrintI : Label::PrintlnI;
+
+				env.commands.emplace_back(patch::make_unique<Print>(env.exp.release(), LabelStr.at(label)));
 			} else
 				env.loc->error("Missing or invalid print argument.");
 		} while (read(*env.loc, ','));
@@ -171,6 +172,16 @@ bool parseVarAssign(Env& env, const std::string& name) {
 		env.loc->error("Variable '" + name + "' does not exist.");
 
 		return false;
+	}
+
+	return false;
+}
+
+bool parseExit(Env& env) {
+	if (read(*env.loc, Tok::Exit)) {
+		env.commands.emplace_back(patch::make_unique<Exit>());
+
+		return true;
 	}
 
 	return false;
@@ -295,9 +306,13 @@ bool parseCommand(Env& env) {
 	if (parsePrint(env)) {
 		std::cout << "Parsed print" << std::endl;
 
-		if (Term* t = env.exp->isTerm()) {
-			while (Literal* lit = t->pop()) {
-				lit->output(std::cout);
+		for (auto& uq : env.commands) {
+			if (Print* p = uq->isPrint()) {
+				if (Term* t = p->exp->isTerm()) {
+					while (Literal* lit = t->pop()) {
+						lit->output(std::cout);
+					}
+				}
 			}
 		}
 
@@ -309,6 +324,8 @@ bool parseCommand(Env& env) {
 			std::cout << kv.first << std::endl;
 		}
 
+		return true;
+	} else if (parseExit(env)) {
 		return true;
 	}
 

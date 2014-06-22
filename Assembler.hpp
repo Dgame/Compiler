@@ -95,6 +95,7 @@ namespace as {
 	void neg(std::ostream& out, Pointer ptr, int offset);
 
 	void call(std::ostream& out, const std::string& label);
+	void ret(std::ostream& out);
 
 	void start(std::ostream& out);
 	void end(std::ostream& out);

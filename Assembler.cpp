@@ -142,6 +142,10 @@ namespace as {
 		out << "call\t" << label << std::endl;
 	}
 
+	void ret(std::ostream& out) {
+		out << "ret" << std::endl;
+	}
+
 	void start(std::ostream& out) {
 		out << ".text\n"
 			<< ".globl _prog\n"
@@ -157,8 +161,8 @@ namespace as {
 		out << std::endl;
 
 		pop(out, EBP);
+		ret(out);
 
-		out << "ret\n\n"
-			<< ".data" << std::endl;
+		out << "\n\n.data" << std::endl;
 	}
 }

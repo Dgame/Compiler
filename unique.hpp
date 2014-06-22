@@ -19,12 +19,7 @@ namespace patch {
 		typedef typename std::remove_extent<T>::type U;
 		return std::unique_ptr<T>(new U[sizeof...(Args)]{std::forward<Args>(args)...});
 	}
-
-	template <typename T>
-	std::unique_ptr<T> make_unique(T* ptr) {
-		return std::unique_ptr<T>(ptr);
-	}
-
+	
 	template <typename T, typename... Args>
 	std::unique_ptr<T> make_unique(Args&&... args) {
 		return make_unique_helper<T>(std::is_array<T>(), std::forward<Args>(args)...);	
