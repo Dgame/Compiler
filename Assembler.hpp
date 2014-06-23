@@ -7,36 +7,94 @@
 #include <map>
 
 enum Accu {
-	EAX = 1,
-	EBX = 2,
-	ECX = 3,
-	EDX = 4,
+	RAX = 1, // 64 Bit
+	EAX = 2, // 32 Bit
+	 AX = 3, // 16 Bit
+	 AH = 4,
+	 AL = 5,
+	RBX = 6, // 64 Bit
+	EBX = 7, // 32 Bit
+	 BX = 8, // 16 Bit
+	 BH = 9,
+	 BL = 10,
+	RCX = 11, // 64 Bit
+	ECX = 12, // 32 Bit
+	 CX = 13, // 16 Bit
+	 CH = 14,
+	 CL = 15,
+	RDX = 16, // 64 Bit
+	EDX = 17, // 32 Bit
+	 DX = 18, // 16 Bit
+	 DH = 19,
+	 DL = 20,
 };
 
 enum Index {
-	ESI = 5,
-	EDI = 6
+	RSI = 21, // 64 Bit
+	ESI = 22, // 32 Bit
+	 SI = 23,
+	RDI = 24, // 64 Bit
+	EDI = 25, // 32 Bit
+	 DI = 26
 };
 
 enum Pointer {
-	EBP = 7,
-	ESP = 8,
-	EIP = 9
+	RBP = 27, // 64 Bit
+	EBP = 28, // 32 Bit
+	 BP = 29,
+	RSP = 30, // 64 Bit
+	ESP = 31, // 32 Bit
+	 SP = 32,
+	RIP = 33, // 64 Bit
+	EIP = 34, // 32 Bit
+	 IP = 35
 };
 
 namespace as {
 	const std::map<int, const std::string> Register = {
+		{RAX, "%rax"},
 		{EAX, "%eax"},
+		{ AX, "%ax"},
+		{ AH, "%ah"},
+		{ AL, "%al"},
+
+		{RBX, "%rbx"},
 		{EBX, "%ebx"},
+		{ BX, "%bx"},
+		{ BH, "%bh"},
+		{ BL, "%bl"},
+
+		{RCX, "%rcx"},
 		{ECX, "%ecx"},
+		{ CX, "%cx"},
+		{ CH, "%ch"},
+		{ CL, "%cl"},
+
+		{RDX, "%rdx"},
 		{EDX, "%edx"},
+		{ DX, "%dx"},
+		{ DH, "%dh"},
+		{ DL, "%dl"},
 
+		{RSI, "%rsi"},
 		{ESI, "%esi"},
-		{EDI, "%edi"},
+		{ SI, "%si"},
 
+		{RDI, "%rdi"},
+		{EDI, "%edi"},
+		{ DI, "%di"},
+
+		{RBP, "%rbp"},
 		{EBP, "%ebp"},
+		{ BP, "%bp"},
+
+		{RSP, "%rsp"},
 		{ESP, "%esp"},
+		{ SP, "%sp"},
+
+		{RIP, "%rip"},
 		{EIP, "%eip"},
+		{ IP, "%ip"},
 	};
 
 	namespace patch {
