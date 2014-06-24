@@ -19,4 +19,3 @@ Variable* VarManager::getVar(const std::string& name) const {
 
 	return it->second.get();
 }
-

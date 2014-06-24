@@ -3,6 +3,8 @@
 
 #include <map>
 #include <memory>
+#include <vector>
+#include <cassert>
 #include "types.hpp"
 
 struct Variable;

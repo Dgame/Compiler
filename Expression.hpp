@@ -180,6 +180,7 @@ struct Variable : public Literal {
 struct Print;
 struct VarAssign;
 struct Exit;
+struct If;
 
 struct Command {
 	virtual Print* isPrint() {
@@ -191,6 +192,10 @@ struct Command {
 	}
 
 	virtual Exit* isExit() {
+		return nullptr;
+	}
+
+	virtual If* isIf() {
 		return nullptr;
 	}
 };
@@ -222,6 +227,18 @@ struct VarAssign : public Command {
 
 struct Exit : public Command {
 	virtual Exit* isExit() override {
+		return this;
+	}
+};
+
+struct If : public Command {
+	std::unique_ptr<Expression> exp;
+	std::string ifLabel;
+	std::string elseLabel;
+
+	explicit If(Expression* exp, const std::string& ifL, const std::string& elseL);
+
+	virtual If* isIf() override {
 		return this;
 	}
 };

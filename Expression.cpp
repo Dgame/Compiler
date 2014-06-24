@@ -58,3 +58,7 @@ Print::Print(Expression* exp, const std::string& label) {
 VarAssign::VarAssign(Variable* var) {
 	this->var = patch::make_unique<Variable>(*var);
 }
+
+If::If(Expression* exp, const std::string& ifL, const std::string& elseL) : ifLabel(ifL), elseLabel(elseL) {
+	this->exp.reset(exp);
+}

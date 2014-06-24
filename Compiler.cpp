@@ -309,6 +309,42 @@ bool parseExpression(Env& env) {
 	return false;
 }
 
+bool parseBlock(Env& env) {
+	if (read(*env.loc, '{')) {
+		// env.var.push_scope();
+
+		while (parseCommand(env)) {
+
+		}
+  
+		if (read(*env.loc, '}')) {
+			// env.var.pop_scope(env.out);
+
+			return true;
+		} else {
+			env.loc->error("Missing '}'.");
+
+			return false;
+		} 
+	}
+
+	return false;
+}
+
+bool parseIf(Env& env) {
+    if (read(*env.loc, Tok::If)) {
+        if (parseExpression(env)) {
+            if (parseBlock(env)) {
+            	env.commands.emplace_back(patch::make_unique<If>(env.exp.release(), "L1", "L2"));
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool parseCommand(Env& env) {
 	if (parsePrint(env)) {
 		// std::cout << "Parsed print" << std::endl;
@@ -334,6 +370,8 @@ bool parseCommand(Env& env) {
 		return true;
 	} else if (parseExit(env)) {
 		return false;
+	} else if (parseIf(env)) {
+		return true;
 	}
 
 	return false;

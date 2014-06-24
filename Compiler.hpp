@@ -14,13 +14,35 @@
 enum class Tok {
 	Print,
 	Var,
-	Exit
+	Exit,
+	If,
+	Else,
+	While,
+	True,
+	False,
+	Equal,
+	NotEqual,
+	LessEqual,
+	Less,
+	GreaterEqual,
+	Greater
 };
 
 const std::map<Tok, const std::string> TokStr = {
 	{Tok::Print, "print"},
 	{Tok::Var, "var"},
-	{Tok::Exit, "exit"}
+	{Tok::Exit, "exit"},
+	{Tok::If, "if"},
+	{Tok::Else, "else"},
+	{Tok::While, "while"},
+	{Tok::True, "true"},
+	{Tok::False, "false"},
+	{Tok::Equal, "=="},
+	{Tok::NotEqual, "!="},
+	{Tok::LessEqual, "<="},
+	{Tok::Less, "<"},
+	{Tok::GreaterEqual, ">="},
+	{Tok::Greater, ">"},
 };
 
 enum class Label {
@@ -60,6 +82,10 @@ bool parseLiteral(Env &env);
 bool parseFactor(Env& env);
 bool parseTerm(Env& env);
 bool parseExpression(Env& env);
+
+bool parseBlock(Env& env);
+bool parseIf(Env& env);
+
 bool parseCommand(Env& env);
 
 #endif
