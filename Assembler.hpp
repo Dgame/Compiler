@@ -6,6 +6,17 @@
 #include <string>
 #include <map>
 
+enum Cond {
+	OVERFLOW,
+	ZERO,
+	EQ,
+	N_EQ,
+	ABV,
+	ABV_EQ,
+	BLW,
+	BLW_EQ
+};
+
 enum Accu {
 	RAX = 1, // 64 Bit
 	EAX = 2, // 32 Bit
@@ -154,6 +165,19 @@ namespace as {
 
 	void call(std::ostream& out, const std::string& label);
 	void ret(std::ostream& out);
+
+	void jump(std::ostream& out);
+	void jump(std::ostream& out, Cond cond, const std::string& label);
+
+	void set(std::ostream& out, Cond cond, Accu accu);
+	void cmp(std::ostream& out, Accu accu, Pointer ptr, int offset);
+
+	void op_and(std::ostream& out, Accu accu);
+	void op_or(std::ostream& out, Accu accu);
+	void op_xor(std::ostream& out, Accu accu);
+	void op_not(std::ostream& out, Accu accu);
+
+	void test(std::ostream& out, Accu a1, Accu a2);
 
 	void start(std::ostream& out);
 	void end(std::ostream& out);

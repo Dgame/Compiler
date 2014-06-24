@@ -311,14 +311,14 @@ bool parseExpression(Env& env) {
 
 bool parseBlock(Env& env) {
 	if (read(*env.loc, '{')) {
-		// env.var.push_scope();
+		env.varManager->pushScope();
 
 		while (parseCommand(env)) {
 
 		}
   
 		if (read(*env.loc, '}')) {
-			// env.var.pop_scope(env.out);
+			env.varManager->popScope();
 
 			return true;
 		} else {

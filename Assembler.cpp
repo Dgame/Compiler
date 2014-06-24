@@ -145,6 +145,114 @@ namespace as {
 		out << "ret" << std::endl;
 	}
 
+	void jump(std::ostream& out, const std::string& label) {
+		out << "jmp\t" << label << std::endl;
+	}
+
+	void jump(std::ostream& out, Cond cond, const std::string& label) {
+		std::string op = "j";
+
+		switch (cond) {
+			case Cond::ZERO:
+				op += "z";
+			break;
+
+			case Cond::EQ:
+				op += "e";
+			break;
+
+			case Cond::N_EQ:
+				op += "ne";
+			break;
+
+			case Cond::ABV:
+				op += "a";
+			break;
+
+			case Cond::ABV_EQ:
+				op += "ae";
+			break;
+
+			case Cond::BLW:
+				op += "b";
+			break;
+
+			case Cond::BLW_EQ:
+				op += "be";
+			break;
+
+			case Cond::OVERFLOW:
+				op += "o";
+			break;
+		}
+
+		out << op << "\t" << label << std::endl;
+	}
+
+	void set(std::ostream& out, Cond cond, Accu accu) {
+		std::string op = "set";
+
+		switch (cond) {
+			case Cond::ZERO:
+				op += "z";
+			break;
+
+			case Cond::EQ:
+				op += "e";
+			break;
+
+			case Cond::N_EQ:
+				op += "ne";
+			break;
+
+			case Cond::ABV:
+				op += "a";
+			break;
+
+			case Cond::ABV_EQ:
+				op += "ae";
+			break;
+
+			case Cond::BLW:
+				op += "b";
+			break;
+
+			case Cond::BLW_EQ:
+				op += "be";
+			break;
+
+			case Cond::OVERFLOW:
+				op += "o";
+			break;
+		}
+
+		out << op << "\t" << Register.at(accu) << std::endl;
+	}
+
+	void cmp(std::ostream& out, Accu accu, Pointer ptr, int offset) {
+		out << "cmpl\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
+	}
+
+	void op_and(std::ostream& out, Accu accu) {
+		out << "and\t" << Register.at(accu) << std::endl;
+	}
+
+	void op_or(std::ostream& out, Accu accu) {
+		out << "or\t" << Register.at(accu) << std::endl;
+	}
+	
+	void op_xor(std::ostream& out, Accu accu) {
+		out << "xor\t" << Register.at(accu) << std::endl;
+	}
+	
+	void op_not(std::ostream& out, Accu accu) {
+		out << "not\t" << Register.at(accu) << std::endl;
+	}
+
+	void test(std::ostream& out, Accu a1, Accu a2) {
+		out << "notl\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
+	}
+
 	void start(std::ostream& out) {
 		out << ".text\n"
 			<< ".globl _prog\n"
