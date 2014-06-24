@@ -1,17 +1,39 @@
 #include "Expression.hpp"
 
 Term::~Term() {
-	for (Literal* lp : this->values) {
+	for (Literal* lp : this->literals) {
 		delete lp;
 	}
 }
 
-ImmedAssign::ImmedAssign(Literal* value) {
-	this->value = value;
+Literal* Term::top() const {
+	if (this->literals.size() == 0)
+		return nullptr;
+
+	return this->literals.front();
 }
 
-ImmedAssign::~ImmedAssign() {
-	delete this->value;
+Literal* Term::at(uint16 index) const {
+	if (this->literals.size() <= index)
+		return nullptr;
+
+	auto it = this->literals.begin();
+
+	return *std::next(it, index);
+}
+
+Literal* Term::pop() {
+	if (this->literals.size() == 0)
+		return nullptr;
+
+	Literal* lp = this->top();
+	this->literals.pop_front();
+
+	return lp;
+}
+
+ImmedAssign::ImmedAssign(Literal* lp) : literal(lp) {
+
 }
 
 Operator::Operator(Op op) {
@@ -55,10 +77,18 @@ Print::Print(Expression* exp, const std::string& label) {
 	this->label = label;
 }
 
-VarAssign::VarAssign(Variable* var) {
-	this->var = patch::make_unique<Variable>(*var);
+VarAssign::VarAssign(const Variable* vp) {
+	this->var = patch::make_unique<Variable>(*vp);
 }
 
-If::If(Expression* exp, const std::string& ifL, const std::string& elseL) : ifLabel(ifL), elseLabel(elseL) {
-	this->exp.reset(exp);
+Compare::Compare(Expression* eplhs, Cmp cmp, Expression* eprhs) : lhs(eplhs), rhs(eprhs) {
+	this->cmp = cmp;
+}
+
+Join::Join(Compare* cep) : mexp(cep) {
+
+}
+
+If::If(Join* jep, const std::string& ifL) : jexp(jep), ifLabel(ifL) {
+
 }

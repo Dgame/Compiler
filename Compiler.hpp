@@ -9,6 +9,7 @@
 #include "Expression.hpp"
 #include "VarManager.hpp"
 #include "Loc.hpp"
+#include "LabelSection.hpp"
 #include "Env.hpp"
 
 enum class Tok {
@@ -18,14 +19,21 @@ enum class Tok {
 	If,
 	Else,
 	While,
+
 	True,
 	False,
+
 	Equal,
 	NotEqual,
-	LessEqual,
+	LessOrEqual,
 	Less,
-	GreaterEqual,
-	Greater
+	GreaterOrEqual,
+	Greater,
+
+	And,
+	Or,
+	Xor,
+	Not,
 };
 
 const std::map<Tok, const std::string> TokStr = {
@@ -35,14 +43,21 @@ const std::map<Tok, const std::string> TokStr = {
 	{Tok::If, "if"},
 	{Tok::Else, "else"},
 	{Tok::While, "while"},
+
 	{Tok::True, "true"},
 	{Tok::False, "false"},
+
 	{Tok::Equal, "=="},
 	{Tok::NotEqual, "!="},
-	{Tok::LessEqual, "<="},
+	{Tok::LessOrEqual, "<="},
 	{Tok::Less, "<"},
-	{Tok::GreaterEqual, ">="},
+	{Tok::GreaterOrEqual, ">="},
 	{Tok::Greater, ">"},
+
+	{Tok::And, "and"},
+	{Tok::Or, "or"},
+	{Tok::Xor, "xor"},
+	{Tok::Not, "not"},
 };
 
 enum class Label {
@@ -81,7 +96,9 @@ bool parseExit(Env& env);
 bool parseLiteral(Env &env);
 bool parseFactor(Env& env);
 bool parseTerm(Env& env);
-bool parseExpression(Env& env);
+bool parseNumericExpression(Env& env);
+bool parseCompareExpression(Env& env);
+bool parseBooleanExpression(Env& env);
 
 bool parseBlock(Env& env);
 bool parseIf(Env& env);

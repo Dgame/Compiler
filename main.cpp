@@ -31,10 +31,12 @@ int main(int argc, char const *argv[]) {
 
 	Loc loc(&code[0], &code.back() + 1);
 	VarManager vm;
+	LabelSection labels;
 
 	Env env;
 	env.loc = &loc;
 	env.varManager = &vm;
+	env.labels = &labels;
 
 	while (parseCommand(env)) {
 

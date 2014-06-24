@@ -107,7 +107,7 @@ bool parsePrint(Env& env) {
 		do {
 			env.exp = patch::make_unique<Term>();
 
-			if (parseExpression(env)) {
+			if (parseNumericExpression(env)) {
 				const bool comma = peek(*env.loc, ',');
 				const Label label = comma ? Label::PrintI : Label::PrintlnI;
 
@@ -157,7 +157,7 @@ bool parseVarAssign(Env& env, const std::string& name) {
 	if (read(*env.loc, '=')) {
 		env.exp = patch::make_unique<Term>();
 
-		if (!parseExpression(env)) {
+		if (!parseNumericExpression(env)) {
 			env.loc->error("Invalid assignment.");
 
 			return false;
@@ -219,7 +219,7 @@ bool parseFactor(Env& env) {
 	if (parseLiteral(env)) {
 		// nothing to do
 	} else if (read(*env.loc, '(')) {
-		if (!parseExpression(env)) {
+		if (!parseNumericExpression(env)) {
 			env.loc->error("Expected expression after '('.");
 
 			return false;
@@ -275,9 +275,9 @@ bool parseTerm(Env& env) {
 	return false;
 }
 
-bool parseExpression(Env& env) {
+bool parseNumericExpression(Env& env) {
 	if (parseTerm(env)) {
-		for (;;) {
+		while (true) {
 			if (read(*env.loc, '+')) {
 				if (!parseTerm(env)) {
 					env.loc->error("Expected Term after +");
@@ -299,9 +299,88 @@ bool parseExpression(Env& env) {
 		}
 
 		Term* t = env.exp->isTerm();
-		if (t != nullptr && t->values.size() == 1) {
+		if (t != nullptr && t->count() == 1) {
 			env.exp.reset(new ImmedAssign(t->pop()));
 		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool parseCompareExpression(Env& env) {
+	env.exp = patch::make_unique<Term>();
+
+	if (parseNumericExpression(env)) {
+		Cmp cmp;
+
+		if (read(*env.loc, Tok::Equal))
+			cmp = Cmp::Equal;
+		else if (read(*env.loc, Tok::NotEqual))
+			cmp = Cmp::NotEqual;
+		else if (read(*env.loc, Tok::LessOrEqual))
+			cmp = Cmp::LessOrEqual;
+		else if (read(*env.loc, Tok::GreaterOrEqual))
+			cmp = Cmp::GreaterOrEqual;
+		else if (read(*env.loc, Tok::Less))
+			cmp = Cmp::Less;
+		else if (read(*env.loc, Tok::Greater))
+			cmp = Cmp::Greater;
+		else {
+			env.loc->error("Unknown compare operator");
+
+			return false;
+		}
+
+		Expression* lhs = env.exp.release();
+		env.exp = patch::make_unique<Term>();
+
+		if (parseNumericExpression(env)) {
+			Expression* rhs = env.exp.release();
+			env.exp = patch::make_unique<Compare>(lhs, cmp, rhs);
+
+			return true;
+		}
+
+		env.loc->error("Expected right-hand-side expression.");
+	}
+
+	return false;
+}
+
+bool parseBooleanExpression(Env& env) {
+	if (parseCompareExpression(env)) {
+		Compare* cexp = env.exp.release()->isCompare();
+		assert(cexp != nullptr);
+
+		std::unique_ptr<Join> join = patch::make_unique<Join>(cexp);
+
+		while (true) {
+			Link lnk;
+
+			if (read(*env.loc, Tok::And))
+				lnk = Link::And;
+			else if (read(*env.loc, Tok::Or))
+				lnk = Link::Or;
+			else if (read(*env.loc, Tok::Xor))
+				lnk = Link::Xor;
+			else
+				break;
+			
+			if (!parseCompareExpression(env)) {
+				env.loc->error("Expected expression after linkage.");
+
+				return false;
+			}
+
+			Compare* cexp = env.exp.release()->isCompare();
+			assert(cexp != nullptr);
+
+			join->exp[lnk] = std::unique_ptr<Compare>(cexp);
+		}
+
+		env.exp = std::move(join);
 
 		return true;
 	}
@@ -316,7 +395,7 @@ bool parseBlock(Env& env) {
 		while (parseCommand(env)) {
 
 		}
-  
+
 		if (read(*env.loc, '}')) {
 			env.varManager->popScope();
 
@@ -325,24 +404,46 @@ bool parseBlock(Env& env) {
 			env.loc->error("Missing '}'.");
 
 			return false;
-		} 
+		}
 	}
 
 	return false;
 }
 
 bool parseIf(Env& env) {
-    if (read(*env.loc, Tok::If)) {
-        if (parseExpression(env)) {
-            if (parseBlock(env)) {
-            	env.commands.emplace_back(patch::make_unique<If>(env.exp.release(), "L1", "L2"));
+	if (read(*env.loc, Tok::If)) {
+		if (parseBooleanExpression(env)) {
+			if (parseBlock(env)) {
+				env.labels->createLabel();
 
-                return true;
-            }
-        }
-    }
+				Join* join = env.exp.release()->isJoin();
+				assert(join != nullptr);
 
-    return false;
+				auto _if = patch::make_unique<If>(join, *env.labels->label);
+
+				if (read(*env.loc, Tok::Else)) {
+                    if (!parseBlock(env)) {
+                    	env.loc->error("Missing else-block.");
+
+                    	return false;
+                    }
+
+                    env.labels->createLabel();
+                    _if->elseLabel = *env.labels->label;
+                }
+
+                env.commands.emplace_back(std::move(_if));
+
+				return true;
+			} else {
+				env.loc->error("Missing if-block.");
+			}
+		} else {
+			env.loc->error("Invalid expression for if.");
+		}
+	}
+
+	return false;
 }
 
 bool parseCommand(Env& env) {

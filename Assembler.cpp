@@ -149,80 +149,96 @@ namespace as {
 		out << "jmp\t" << label << std::endl;
 	}
 
-	void jump(std::ostream& out, Cond cond, const std::string& label) {
+	void jump(std::ostream& out, Flag flag, const std::string& label) {
 		std::string op = "j";
 
-		switch (cond) {
-			case Cond::ZERO:
+		switch (flag) {
+			case Flag::Zero:
 				op += "z";
 			break;
 
-			case Cond::EQ:
+			case Flag::Equal:
 				op += "e";
 			break;
 
-			case Cond::N_EQ:
+			case Flag::NotEqual:
 				op += "ne";
 			break;
 
-			case Cond::ABV:
+			case Flag::Above:
 				op += "a";
 			break;
 
-			case Cond::ABV_EQ:
+			case Flag::AboveEq:
 				op += "ae";
 			break;
 
-			case Cond::BLW:
+			case Flag::Below:
 				op += "b";
 			break;
 
-			case Cond::BLW_EQ:
+			case Flag::BelowEq:
 				op += "be";
 			break;
 
-			case Cond::OVERFLOW:
+			case Flag::Overflow:
 				op += "o";
+			break;
+
+			case Flag::Carry:
+				op += "c";
+			break;
+
+			case Flag::NotCarry:
+				op += "nc";
 			break;
 		}
 
 		out << op << "\t" << label << std::endl;
 	}
 
-	void set(std::ostream& out, Cond cond, Accu accu) {
+	void set(std::ostream& out, Flag flag, Accu accu) {
 		std::string op = "set";
 
-		switch (cond) {
-			case Cond::ZERO:
+		switch (flag) {
+			case Flag::Zero:
 				op += "z";
 			break;
 
-			case Cond::EQ:
+			case Flag::Equal:
 				op += "e";
 			break;
 
-			case Cond::N_EQ:
+			case Flag::NotEqual:
 				op += "ne";
 			break;
 
-			case Cond::ABV:
+			case Flag::Above:
 				op += "a";
 			break;
 
-			case Cond::ABV_EQ:
+			case Flag::AboveEq:
 				op += "ae";
 			break;
 
-			case Cond::BLW:
+			case Flag::Below:
 				op += "b";
 			break;
 
-			case Cond::BLW_EQ:
+			case Flag::BelowEq:
 				op += "be";
 			break;
 
-			case Cond::OVERFLOW:
+			case Flag::Overflow:
 				op += "o";
+			break;
+
+			case Flag::Carry:
+				op += "c";
+			break;
+
+			case Flag::NotCarry:
+				op += "nc";
 			break;
 		}
 

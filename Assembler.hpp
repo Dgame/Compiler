@@ -6,15 +6,17 @@
 #include <string>
 #include <map>
 
-enum Cond {
-	OVERFLOW,
-	ZERO,
-	EQ,
-	N_EQ,
-	ABV,
-	ABV_EQ,
-	BLW,
-	BLW_EQ
+enum Flag {
+	Equal = 100,
+	NotEqual = 200,
+	Above = 300,
+	AboveEq = 400,
+	Below = 500,
+	BelowEq = 600,
+	Overflow = 700,
+	Zero = 800,
+	Carry = 900,
+	NotCarry = 1000
 };
 
 enum Accu {
@@ -43,22 +45,22 @@ enum Accu {
 enum Index {
 	RSI = 21, // 64 Bit
 	ESI = 22, // 32 Bit
-	 SI = 23,
+	 SI = 23, // 16 Bit
 	RDI = 24, // 64 Bit
 	EDI = 25, // 32 Bit
-	 DI = 26
+	 DI = 26  // 16 Bit
 };
 
 enum Pointer {
 	RBP = 27, // 64 Bit
 	EBP = 28, // 32 Bit
-	 BP = 29,
+	 BP = 29, // 16 Bit
 	RSP = 30, // 64 Bit
 	ESP = 31, // 32 Bit
-	 SP = 32,
+	 SP = 32, // 16 Bit
 	RIP = 33, // 64 Bit
 	EIP = 34, // 32 Bit
-	 IP = 35
+	 IP = 35  // 16 Bit
 };
 
 namespace as {
@@ -167,9 +169,9 @@ namespace as {
 	void ret(std::ostream& out);
 
 	void jump(std::ostream& out);
-	void jump(std::ostream& out, Cond cond, const std::string& label);
+	void jump(std::ostream& out, Flag flag, const std::string& label);
 
-	void set(std::ostream& out, Cond cond, Accu accu);
+	void set(std::ostream& out, Flag flag, Accu accu);
 	void cmp(std::ostream& out, Accu accu, Pointer ptr, int offset);
 
 	void op_and(std::ostream& out, Accu accu);

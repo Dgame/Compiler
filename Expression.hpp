@@ -53,6 +53,8 @@ struct Literal {
 
 struct Term;
 struct ImmedAssign;
+struct Compare;
+struct Join;
 
 struct Expression {
 	virtual Term* isTerm() {
@@ -62,14 +64,22 @@ struct Expression {
 	virtual ImmedAssign* isImmedAssign() {
 		return nullptr;
 	}
+	
+	virtual Compare* isCompare() {
+		return nullptr;
+	}
+
+	virtual Join* isJoin() {
+		return nullptr;
+	}
 
 	virtual void assign(Literal* lp) {
-
+		assert(0);
 	}
 };
 
 struct Term : public Expression {
-	std::list<Literal*> values;
+	std::list<Literal*> literals;
 
 	virtual ~Term();
 
@@ -77,34 +87,16 @@ struct Term : public Expression {
 		return this;
 	}
 
-	Literal* top() const {
-		if (this->values.size() == 0)
-			return nullptr;
-
-		return this->values.front();
+	uint16 count() const {
+		return this->literals.size();
 	}
 
-	Literal* at(uint16 index) const {
-		if (this->values.size() <= index)
-			return nullptr;
-
-		auto it = this->values.begin();
-
-		return *std::next(it, index);
-	}
-
-	Literal* pop() {
-		if (this->values.size() == 0)
-			return nullptr;
-
-		Literal* lp = this->top();
-		this->values.pop_front();
-
-		return lp;
-	}
+	Literal* top() const;
+	Literal* at(uint16 index) const;
+	Literal* pop();
 
 	void push(Literal* lp) {
-		this->values.push_back(lp);
+		this->literals.emplace_back(lp);
 	}
 
 	virtual void assign(Literal* lp) override {
@@ -113,17 +105,55 @@ struct Term : public Expression {
 };
 
 struct ImmedAssign : public Expression {
-	Literal* value;
+	std::shared_ptr<Literal> literal;
 
-	explicit ImmedAssign(Literal* value);
-	virtual ~ImmedAssign();
+	explicit ImmedAssign(Literal* lp);
 
 	virtual ImmedAssign* isImmedAssign() override {
 		return this;
 	}
 
 	virtual void assign(Literal* lp) override {
-		this->value = lp;
+		this->literal.reset(lp);
+	}
+};
+
+enum class Link {
+	And,
+	Or,
+	Xor
+};
+
+enum class Cmp {
+	Equal,
+	NotEqual,
+	Greater,
+	GreaterOrEqual,
+	Less,
+	LessOrEqual
+};
+
+struct Compare : public Expression {
+	Cmp cmp;
+
+	std::unique_ptr<Expression> lhs;
+	std::unique_ptr<Expression> rhs;
+
+	explicit Compare(Expression* eplhs, Cmp cmp, Expression* eprhs);
+
+	virtual Compare* isCompare() override {
+		return this;
+	}
+};
+
+struct Join : public Expression {
+	std::unique_ptr<Compare> mexp;
+	std::map<Link, std::unique_ptr<Compare>> exp;
+
+	explicit Join(Compare* cep);
+
+	virtual Join* isJoin() override {
+		return this;
 	}
 };
 
@@ -204,7 +234,7 @@ struct Print : public Command {
 	std::unique_ptr<Expression> exp;
 	std::string label;
 
-	explicit Print(Expression* exp, const std::string& label);
+	explicit Print(Expression* ep, const std::string& label);
 
 	virtual Print* isPrint() override {
 		return this;
@@ -218,7 +248,7 @@ struct Print : public Command {
 struct VarAssign : public Command {
 	std::unique_ptr<Variable> var;
 
-	explicit VarAssign(Variable* var);
+	explicit VarAssign(const Variable* vp);
 
 	virtual VarAssign* isVarAssign() override {
 		return this;
@@ -232,11 +262,12 @@ struct Exit : public Command {
 };
 
 struct If : public Command {
-	std::unique_ptr<Expression> exp;
+	std::unique_ptr<Join> jexp;
+
 	std::string ifLabel;
 	std::string elseLabel;
 
-	explicit If(Expression* exp, const std::string& ifL, const std::string& elseL);
+	explicit If(Join* jep, const std::string& ifL);
 
 	virtual If* isIf() override {
 		return this;

@@ -3,9 +3,9 @@
 
 void buildAssembler(std::ostream& out, Expression* exp) {
 	if (ImmedAssign* ia = exp->isImmedAssign()) {
-		if (Value* v = ia->value->isValue()) {
+		if (Value* v = ia->literal->isValue()) {
 			as::move(out, v->value, EAX);
-		} else if (Variable* v = ia->value->isVariable()) {
+		} else if (Variable* v = ia->literal->isVariable()) {
 			as::move(out, ESP, v->offset, EAX);
 		}
 	} else if (Term* t = exp->isTerm()) {
@@ -131,9 +131,9 @@ void buildAssembler(std::ostream& out, Expression* exp) {
 
 void buildAssembler(std::ostream& out, Print* print) {
 	if (ImmedAssign* ia = print->exp->isImmedAssign()) {
-		if (Value* v = ia->value->isValue()) {
+		if (Value* v = ia->literal->isValue()) {
 			as::push(out, v->value);
-		} else if (Variable* v = ia->value->isVariable()) {
+		} else if (Variable* v = ia->literal->isVariable()) {
 			as::push(out, ESP, v->offset);
 		}
 	} else {
@@ -149,9 +149,9 @@ void buildAssembler(std::ostream& out, VarAssign* va) {
 	Variable* var = va->var.get();
 
 	if (ImmedAssign* ia = var->exp->isImmedAssign()) {
-		if (Value* v = ia->value->isValue()) {
+		if (Value* v = ia->literal->isValue()) {
 			as::move(out, v->value, ESP, var->offset);
-		} else if (Variable* v = ia->value->isVariable()) {
+		} else if (Variable* v = ia->literal->isVariable()) {
 			as::move(out, ESP, v->offset, EAX);
 			as::move(out, EAX, ESP, var->offset);
 		}

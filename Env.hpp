@@ -8,6 +8,7 @@ struct Loc;
 struct Expression;
 struct VarManager;
 struct Command;
+struct LabelSection;
 
 struct Env {
 	Loc* loc;
@@ -15,6 +16,8 @@ struct Env {
 
 	VarManager* varManager;
 	std::vector<std::unique_ptr<Command>> commands;
+
+	LabelSection* labels;
 };
 
 #endif
