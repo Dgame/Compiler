@@ -246,11 +246,11 @@ namespace as {
 	}
 	
 	void op_not(std::ostream& out, Accu accu) {
-		out << "not\t" << Register.at(accu) << std::endl;
+		out << "notl\t" << Register.at(accu) << std::endl;
 	}
 
 	void test(std::ostream& out, Accu a1, Accu a2) {
-		out << "notl\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
+		out << "testl\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
 	}
 
 	void start(std::ostream& out) {
