@@ -64,7 +64,7 @@ struct Expression {
 	virtual ImmedAssign* isImmedAssign() {
 		return nullptr;
 	}
-	
+
 	virtual Compare* isCompare() {
 		return nullptr;
 	}
@@ -125,12 +125,12 @@ enum class Link {
 };
 
 enum class Cmp {
-	Equal,
-	NotEqual,
-	Greater,
-	GreaterOrEqual,
-	Less,
-	LessOrEqual
+	Equal = 1,
+	NotEqual = 2,
+	Greater = 3,
+	GreaterOrEqual = 4,
+	Less = 5,
+	LessOrEqual = 6
 };
 
 struct Compare : public Expression {

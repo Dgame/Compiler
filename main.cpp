@@ -6,8 +6,9 @@
 
 #define BASIC_PRINT 0
 #define BASIC_VAR 0
-#define EXT_VAR 1
+#define EXT_VAR 0
 #define STRING_PRINT 0
+#define BASIC_IF 1
 
 int main(int argc, char const *argv[]) {
 #if BASIC_VAR
@@ -16,6 +17,8 @@ int main(int argc, char const *argv[]) {
 	std::ifstream in("test/ext_var.txt");
 #elif STRING_PRINT
 	std::ifstream in("test/string_print.txt");
+#elif BASIC_IF
+	std::ifstream in("test/basic_if.txt");
 #else
 	std::ifstream in("test/basic_print.txt");
 #endif
@@ -30,13 +33,11 @@ int main(int argc, char const *argv[]) {
 	std::ostringstream out;
 
 	Loc loc(&code[0], &code.back() + 1);
-	VarManager vm;
-	LabelSection labels;
+	Scopes scopes;
 
 	Env env;
 	env.loc = &loc;
-	env.varManager = &vm;
-	env.labels = &labels;
+	env.scope = &scopes;
 
 	while (parseCommand(env)) {
 
@@ -44,18 +45,36 @@ int main(int argc, char const *argv[]) {
 
 	if (loc.errors == 0) {
 		as::start(content);
-		if (vm.stackSize != 0) {
-			as::sub(content, vm.stackSize, ESP);
+		if (scopes.stackSize != 0) {
+			as::sub(content, scopes.stackSize, ESP);
 			content << std::endl;
 		}
 
-		for (std::unique_ptr<Command>& cmd : env.commands) {
+		for (std::unique_ptr<Command>& cmd : scopes.commands[GlobalLabel]) {
 			buildAssembler(content, cmd.get());
 		}
 
-		if (vm.stackSize != 0)
-			as::add(content, vm.stackSize, ESP);
+		if (scopes.stackSize != 0)
+			as::add(content, scopes.stackSize, ESP);
+		
 		as::end(content);
+		content << std::endl;
+
+		auto it = scopes.commands.find(GlobalLabel);
+		scopes.commands.erase(it);
+
+		for (auto& pair : scopes.commands) {
+			content << pair.first << ':' << std::endl;
+			content << std::endl;
+
+			for (std::unique_ptr<Command>& cmd : pair.second) {
+				buildAssembler(content, cmd.get());
+			}
+
+			content << std::endl;
+
+			as::ret(content);
+		}
 	}
 
 	return 0;

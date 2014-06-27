@@ -7,9 +7,8 @@
 #include <map>
 
 #include "Expression.hpp"
-#include "VarManager.hpp"
 #include "Loc.hpp"
-#include "LabelSection.hpp"
+#include "Scopes.hpp"
 #include "Env.hpp"
 
 enum class Tok {
@@ -60,18 +59,18 @@ const std::map<Tok, const std::string> TokStr = {
 	{Tok::Not, "not"},
 };
 
-enum class Label {
+enum class RTLabel {
 	PrintI,
 	PrintlnI,
 	PrintS,
 	PrintlnS
 };
 
-const std::map<Label, const std::string> LabelStr = {
-	{Label::PrintI, "_print_int"},
-	{Label::PrintlnI, "_println_int"},
-	{Label::PrintS, "_print_string"},
-	{Label::PrintlnS, "_println_string"}
+const std::map<RTLabel, const std::string> RTLabelStr = {
+	{RTLabel::PrintI, "_print_int"},
+	{RTLabel::PrintlnI, "_println_int"},
+	{RTLabel::PrintS, "_print_string"},
+	{RTLabel::PrintlnS, "_println_string"}
 };
 
 bool skipComment(Loc& loc);

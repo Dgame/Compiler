@@ -165,6 +165,70 @@ void buildAssembler(std::ostream& out, Exit* exit) {
 	// as::ret(out);
 }
 
+void buildAssembler(std::ostream& out, If* _if) {
+	Join* join = _if->jexp.get();
+
+	int flag = static_cast<int>(join->mexp->cmp) * FLAG_FACTOR;
+
+	Expression* exp = join->mexp->lhs.get();
+	if (exp != nullptr) {
+		buildAssembler(out, exp);
+	}
+
+	exp = join->mexp->rhs.get();
+	if (exp != nullptr) {
+		as::push(out, EAX);
+		buildAssembler(out, exp);
+	}
+
+	as::cmp(out, EAX, ESP, 0);
+	as::move(out, 0, EAX);
+	as::set(out, static_cast<Flag>(flag), AL);
+	as::add(out, 4, ESP);
+
+	for (auto& pair : join->exp) {
+		switch (pair.first) {
+			case Link::And:
+				as::op_and(out, EAX, ESP, 0);
+			break;
+
+			case Link::Or:
+				as::op_or(out, EAX, ESP, 0);
+			break;
+
+			case Link::Xor:
+				as::op_xor(out, EAX, ESP, 0);
+			break;
+		}
+
+		Compare* cmp = pair.second.get();
+
+		flag = static_cast<int>(cmp->cmp) * FLAG_FACTOR;
+
+		Expression* exp = cmp->lhs.get();
+		if (exp != nullptr) {
+			buildAssembler(out, exp);
+		}
+
+		exp = cmp->rhs.get();
+		if (exp != nullptr) {
+			as::push(out, EAX);
+			buildAssembler(out, exp);
+		}
+
+		as::cmp(out, EAX, ESP, 0);
+		as::move(out, 0, EAX);
+		as::set(out, static_cast<Flag>(flag), AL);
+		as::add(out, 4, ESP);
+	}
+
+	as::test(out, EAX, EAX);
+	as::jump(out, Flag::Zero, _if->ifLabel);
+
+	if (_if->elseLabel.size() != 0)
+		as::jump(out, _if->elseLabel);
+}
+
 void buildAssembler(std::ostream& out, Command* cmd) {
 	if (Print* p = cmd->isPrint()) {
 		buildAssembler(out, p);
@@ -172,6 +236,8 @@ void buildAssembler(std::ostream& out, Command* cmd) {
 		buildAssembler(out, va);
 	} else if (Exit* e = cmd->isExit()) {
 		buildAssembler(out, e);
+	} else if (If* _if = cmd->isIf()) {
+		buildAssembler(out, _if);
 	}
 
 	out << std::endl;

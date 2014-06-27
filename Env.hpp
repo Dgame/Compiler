@@ -6,18 +6,13 @@
 
 struct Loc;
 struct Expression;
-struct VarManager;
-struct Command;
-struct LabelSection;
+struct Scopes;
 
 struct Env {
 	Loc* loc;
 	std::unique_ptr<Expression> exp;
 
-	VarManager* varManager;
-	std::vector<std::unique_ptr<Command>> commands;
-
-	LabelSection* labels;
+	Scopes* scope;
 };
 
 #endif

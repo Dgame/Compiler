@@ -194,7 +194,7 @@ namespace as {
 			break;
 		}
 
-		out << op << "\t" << label << std::endl;
+		out << op << "\t\t" << label << std::endl;
 	}
 
 	void set(std::ostream& out, Flag flag, Accu accu) {
@@ -242,23 +242,39 @@ namespace as {
 			break;
 		}
 
-		out << op << "\t" << Register.at(accu) << std::endl;
+		out << op << " \t" << Register.at(accu) << std::endl;
+	}
+
+	void cmp(std::ostream& out, Accu a1, Accu a2) {
+		out << "cmpl\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
 	}
 
 	void cmp(std::ostream& out, Accu accu, Pointer ptr, int offset) {
 		out << "cmpl\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
 	}
 
-	void op_and(std::ostream& out, Accu accu) {
-		out << "and\t" << Register.at(accu) << std::endl;
+	void op_and(std::ostream& out, Accu a1, Accu a2) {
+		out << "and\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
 	}
 
-	void op_or(std::ostream& out, Accu accu) {
-		out << "or\t" << Register.at(accu) << std::endl;
+	void op_and(std::ostream& out, Accu accu, Pointer ptr, int offset) {
+		out << "and\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
+	}
+
+	void op_or(std::ostream& out, Accu a1, Accu a2) {
+		out << "or\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
+	}
+
+	void op_or(std::ostream& out, Accu accu, Pointer ptr, int offset) {
+		out << "and\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
 	}
 	
-	void op_xor(std::ostream& out, Accu accu) {
-		out << "xor\t" << Register.at(accu) << std::endl;
+	void op_xor(std::ostream& out, Accu a1, Accu a2) {
+		out << "xor\t" << Register.at(a1) << ", " << Register.at(a2) << std::endl;
+	}
+
+	void op_xor(std::ostream& out, Accu accu, Pointer ptr, int offset) {
+		out << "and\t" << Register.at(accu) << ", " << addrOf(ptr, offset) << std::endl;
 	}
 	
 	void op_not(std::ostream& out, Accu accu) {

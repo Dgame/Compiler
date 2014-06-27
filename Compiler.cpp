@@ -38,6 +38,8 @@ bool read(Loc& loc, const std::string& what) {
 	}
 
 	if (!loc.eof() && !std::isspace(*loc.pos)) {
+		loc.error("Unknown command.");
+
 		return false;
 	}
 
@@ -109,9 +111,10 @@ bool parsePrint(Env& env) {
 
 			if (parseNumericExpression(env)) {
 				const bool comma = peek(*env.loc, ',');
-				const Label label = comma ? Label::PrintI : Label::PrintlnI;
+				const RTLabel label = comma ? RTLabel::PrintI : RTLabel::PrintlnI;
 
-				env.commands.emplace_back(patch::make_unique<Print>(env.exp.release(), LabelStr.at(label)));
+				auto print = patch::make_unique<Print>(env.exp.release(), RTLabelStr.at(label));
+				env.scope->addCmd(print.release());
 			} else
 				env.loc->error("Missing or invalid print argument.");
 		} while (read(*env.loc, ','));
@@ -127,7 +130,7 @@ bool parseVar(Env& env) {
 
 	if (read(*env.loc, Tok::Var)) {
 		if (readIdentifier(*env.loc, &identifier)) {
-			if (!env.varManager->createVar(identifier)) {
+			if (!env.scope->createVar(identifier)) {
 				env.loc->error("Redefinition of variable '" + identifier + '\'');
 
 				return false;
@@ -163,10 +166,10 @@ bool parseVarAssign(Env& env, const std::string& name) {
 			return false;
 		}
 
-		if (Variable* var = env.varManager->getVar(name)) {
+		if (Variable* var = env.scope->getVar(name)) {
 			var->exp.reset(env.exp.release());
 
-			env.commands.emplace_back(patch::make_unique<VarAssign>(var));
+			env.scope->addCmd(new VarAssign(var));
 
 			return true;
 		}
@@ -181,7 +184,7 @@ bool parseVarAssign(Env& env, const std::string& name) {
 
 bool parseExit(Env& env) {
 	if (read(*env.loc, Tok::Exit)) {
-		env.commands.emplace_back(patch::make_unique<Exit>());
+		env.scope->addCmd(new Exit());
 
 		return true;
 	}
@@ -199,7 +202,7 @@ bool parseLiteral(Env &env) {
 
 	std::string identifier;
 	if (readIdentifier(*env.loc, &identifier)) {
-		if (Variable* var = env.varManager->getVar(identifier)) {
+		if (Variable* var = env.scope->getVar(identifier)) {
 			// env.exp->assign(new Variable(*var));
 			env.exp->assign(var);
 
@@ -390,14 +393,14 @@ bool parseBooleanExpression(Env& env) {
 
 bool parseBlock(Env& env) {
 	if (read(*env.loc, '{')) {
-		env.varManager->pushScope();
+		env.scope->pushScope();
 
 		while (parseCommand(env)) {
 
 		}
 
 		if (read(*env.loc, '}')) {
-			env.varManager->popScope();
+			env.scope->popScope();
 
 			return true;
 		} else {
@@ -414,12 +417,10 @@ bool parseIf(Env& env) {
 	if (read(*env.loc, Tok::If)) {
 		if (parseBooleanExpression(env)) {
 			if (parseBlock(env)) {
-				env.labels->createLabel();
-
 				Join* join = env.exp.release()->isJoin();
 				assert(join != nullptr);
 
-				auto _if = patch::make_unique<If>(join, *env.labels->label);
+				auto _if = patch::make_unique<If>(join, env.scope->lastLabel);
 
 				if (read(*env.loc, Tok::Else)) {
                     if (!parseBlock(env)) {
@@ -428,11 +429,10 @@ bool parseIf(Env& env) {
                     	return false;
                     }
 
-                    env.labels->createLabel();
-                    _if->elseLabel = *env.labels->label;
+                    _if->elseLabel = env.scope->lastLabel;
                 }
 
-                env.commands.emplace_back(std::move(_if));
+                env.scope->addCmd(_if.release());
 
 				return true;
 			} else {
@@ -448,31 +448,13 @@ bool parseIf(Env& env) {
 
 bool parseCommand(Env& env) {
 	if (parsePrint(env)) {
-		// std::cout << "Parsed print" << std::endl;
-		/*
-		for (auto& uq : env.commands) {
-			if (Print* p = uq->isPrint()) {
-				if (Term* t = p->exp->isTerm()) {
-					while (Literal* lit = t->pop()) {
-						lit->output(std::cout);
-					}
-				}
-			}
-		}
-		*/
 		return true;
-	} else if (parseVar(env)) {
-		// std::cout << "Parsed Var" << std::endl;
-		/*
-		for (auto& kv : env.varManager->variables) {
-			std::cout << kv.first << std::endl;
-		}
-		*/
-		return true;
-	} else if (parseExit(env)) {
-		return false;
 	} else if (parseIf(env)) {
 		return true;
+	} else if (parseVar(env)) {
+	 	return true;
+	} else if (parseExit(env)) {
+		return false;
 	}
 
 	return false;
